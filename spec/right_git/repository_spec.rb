@@ -41,8 +41,13 @@ describe RightGit::Repository do
   let(:repo_dir)  { ::RightGit::RepositorySpec::REPO_DIR }
   let(:temp_dir)  { ::RightGit::RepositorySpec::TEMP_DIR }
 
-  let(:vet_error)    { 'git exited zero but an error was detected in output.' }
-  let(:happy_output) { 'joy' }
+  let(:vet_error)    { 'Git exited zero but an error was detected in output.' }
+  let(:happy_output) do
+<<EOF
+Doesn't really matter so long as
+nothing matches the sad pattern.
+EOF
+  end
   let(:sad_output) do
 <<EOF
 As msysgit on Windows...
@@ -91,7 +96,7 @@ EOF
             once
           logger.
             should_receive(:info).
-            with(happy_output).
+            with(happy_output.strip).
             and_return(true).
             once
           repo = described_class.clone_to(repo_url, directory, repo_options)
@@ -154,7 +159,7 @@ EOF
           once
         logger.
           should_receive(:info).
-          with(happy_output).
+          with(happy_output.strip).
           and_return(true).
           once
         subject.fetch(*fetch_args).should be_true
@@ -206,7 +211,7 @@ EOF
           once
         logger.
           should_receive(:info).
-          with(happy_output).
+          with(happy_output.strip).
           and_return(true).
           twice
         subject.fetch_all(fetch_all_options).should be_true
@@ -310,7 +315,267 @@ EOF
         it_should_behave_like 'git branch'
       end
     end
-
   end # branches
+
+  context '#tags' do
+    let(:tag_list) { ['tag_a', 'tag_b', 'tag_c'] }
+
+    it 'should query tags' do
+      shell.
+        should_receive(:output_for).
+        with('git tag', shell_execute_options).
+        and_return(tag_list.join("\n") + "\n").
+        once
+      actual = subject.tags.should == tag_list
+    end
+  end # tags
+
+  context '#log' do
+    shared_examples_for 'git log' do
+      it 'should query log' do
+        shell.
+          should_receive(:output_for).
+          with((['git', 'log'] + log_args).join(' '), shell_execute_options).
+          and_return(log_output).
+          once
+        actual = subject.log(revision, log_options)
+        actual.should_not be_empty
+        actual.first.should be_a_kind_of(::RightGit::Commit)
+        actual_commits = actual.map do |commit|
+          {
+            :hash      => commit.hash,
+            :timestamp => commit.timestamp.to_i,
+            :author    => commit.author
+          }
+        end
+        actual_commits.should == expected_commits
+      end
+    end
+
+    let(:expected_commits) do
+      [
+        { :hash => '0123456', :timestamp => 1378318888, :author => 'foo@bar.com' },
+        { :hash => '789abcd', :timestamp => 1378317777, :author => 'foo@bar.com' },
+        { :hash => 'ef01234', :timestamp => 1378316666, :author => 'foo@bar.com' }
+      ]
+    end
+    let(:log_output) do
+      expected_commits.inject([]) do |result, data|
+        result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]}"
+        result
+      end.join("\n") + "\n"
+    end
+
+    [
+      [nil, {}, ['-n1000', '--format="%h %at %aE"']],
+      [
+        'master',
+        {:tail => 3, :no_merges => true},
+        ['-n3', '--format="%h %at %aE"', '--no-merges master']
+      ]
+    ].each do |params|
+      context "params = #{params.inspect[0..31]}..." do
+        let(:revision)    { params[0] }
+        let(:log_options) { params[1] }
+        let(:log_args)    { params[2] }
+        it_should_behave_like 'git log'
+      end
+    end
+  end # tags
+
+  context '#clean' do
+    shared_examples_for 'git clean' do
+      it 'should clean' do
+        shell.
+          should_receive(:execute).
+          with(
+            (['git', 'clean'] + clean_args).join(' '),
+            shell_execute_options).
+          and_return(true).
+          once
+        subject.clean(*clean_args).should be_true
+      end
+    end # git clean
+
+    [[], ['-X']].each do |params|
+      context "params = #{params.inspect}" do
+        let(:clean_args) { params }
+        it_should_behave_like 'git clean'
+      end
+    end
+  end # clean
+
+  context '#clean_all' do
+    shared_examples_for 'git clean all' do
+      it 'should clean all' do
+        shell.
+          should_receive(:execute).
+          with(
+            (['git', 'clean', '-d', '-f', '-f'] + clean_all_args).join(' '),
+            shell_execute_options).
+          and_return(true).
+          once
+        subject.clean_all(clean_gitignored).should be_true
+      end
+    end # git clean all
+
+    [[false, []], [true, ['-x']]].each do |params|
+      context "params = #{params.inspect}" do
+        let(:clean_gitignored) { params[0] }
+        let(:clean_all_args)   { params[1] }
+        it_should_behave_like 'git clean all'
+      end
+    end
+  end # clean_all
+
+  context '#hard_reset_to' do
+    shared_examples_for 'git reset' do
+      it 'should reset' do
+        shell.
+          should_receive(:output_for).
+          with(
+            (['git', 'reset', '--hard'] + reset_args).join(' '),
+            shell_execute_options).
+          and_return(happy_output).
+          once
+        logger.
+          should_receive(:info).
+          with(happy_output.strip).
+          and_return(true).
+          once
+        subject.hard_reset_to(revision).should be_true
+      end
+
+      it 'should detect errors' do
+        shell.
+          should_receive(:output_for).
+          with(
+            (['git', 'reset', '--hard'] + reset_args).join(' '),
+            shell_execute_options).
+          and_return(sad_output).
+          once
+        logger.
+          should_receive(:info).
+          with(sad_output.strip).
+          and_return(true).
+          once
+        expect { subject.hard_reset_to(revision) }.
+          to raise_error(described_class::GitError, vet_error)
+      end
+    end # git reset
+
+    [[nil, []], ['master', ['master']]].each do |params|
+      context "params = #{params.inspect}" do
+        let(:revision)   { params[0] }
+        let(:reset_args) { params[1] }
+        it_should_behave_like 'git reset'
+      end
+    end
+  end # hard_reset_to
+
+  context '#submodule_paths' do
+    shared_examples_for 'git submodule status' do
+      it 'should query submodules' do
+        shell.
+          should_receive(:output_for).
+          with(
+            (['git', 'submodule', 'status'] + submodule_args).join(' '),
+            shell_execute_options).
+          and_return(submodule_output).
+          once
+        actual_submodules = subject.submodule_paths(recursive)
+        actual_submodules.should == expected_submodules
+      end
+
+      it 'should detect errors' do
+        shell.
+          should_receive(:output_for).
+          with(
+            (['git', 'submodule', 'status'] + submodule_args).join(' '),
+            shell_execute_options).
+          and_return(sad_output).
+          once
+        expect { subject.submodule_paths(recursive) }.
+          to raise_error(
+            described_class::GitError,
+            "Unexpected output from submodule status: #{sad_output.lines.first.chomp.inspect}")
+      end
+    end # git submodule status
+
+    let(:expected_submodules) { ['foo/bar', 'foo/baz'] }
+    let(:submodule_output) do
+<<EOF
++0123456789abcdef0123456789abcdef01234567 #{expected_submodules[0]} (v1.0.0-12-g1234567)
+ 89abcdef0123456789abcdef0123456789abcdef #{expected_submodules[1]} (v2.1-3-g89abcde)
+EOF
+    end
+
+    [[false, []], [true, ['--recursive']]].each do |params|
+      context "params = #{params.inspect}" do
+        let(:recursive)      { params[0] }
+        let(:submodule_args) { params[1] }
+        it_should_behave_like 'git submodule status'
+      end
+    end
+  end # submodule_paths
+
+  context '#update_submodules' do
+    shared_examples_for 'git submodule update' do
+      it 'should update submodules' do
+        shell.
+          should_receive(:execute).
+          with(
+            (['git', 'submodule', 'update', '--init'] + submodule_args).join(' '),
+            shell_execute_options).
+          and_return(true).
+          once
+        subject.update_submodules(recursive).should be_true
+      end
+    end # git submodule update
+
+    [[false, []], [true, ['--recursive']]].each do |params|
+      context "params = #{params.inspect}" do
+        let(:recursive)      { params[0] }
+        let(:submodule_args) { params[1] }
+        it_should_behave_like 'git submodule update'
+      end
+    end
+  end # update_submodules
+
+  context '#sha_for' do
+    shared_examples_for 'git show' do
+      it 'should query SHA' do
+        shell.
+          should_receive(:output_for).
+          with(
+            (['git', 'show'] + show_args).join(' '),
+            shell_execute_options).
+          and_return(show_output).
+          once
+        actual_revision = subject.sha_for(revision).should
+        actual_revision.should == expected_revision
+      end
+    end # git submodule update
+
+    let(:expected_revision) { '0123456789abcdef0123456789abcdef01234567' }
+    let(:show_output) do
+<<EOF
+commit #{expected_revision}
+Author: Psy <psy@psy.psy>
+Date:   Mon Aug 12 14:28:58 2013 -0700
+
+    Coding Gangnam Style
+...
+EOF
+    end
+
+    [[nil, []], ['master', ['master']]].each do |params|
+      context "params = #{params.inspect}" do
+        let(:revision) { params[0] }
+        let(:show_args) { params[1] }
+        it_should_behave_like 'git show'
+      end
+    end
+  end # update_submodules
 
 end # RightGit::Repository

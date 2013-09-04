@@ -186,7 +186,11 @@ module RightGit
 
     # Performs a hard reset to the given revision, if given, or else the last
     # checked-out SHA.
-    def hard_reset_to(revision = nil)
+    #
+    # @param [String] revision as target for hard reset or nil for hard reset to HEAD
+    #
+    # @return [TrueClass] always true
+    def hard_reset_to(revision)
       git_args = ['reset', '--hard']
       git_args << revision if revision
       vet_output(git_args)
@@ -221,13 +225,7 @@ module RightGit
       git_args = ['submodule', 'update', '--init']
       git_args << '--recursive' if recursive
       spit_output(git_args)
-    end
-
-    # Determines the SHA referenced by the current directory.
-    #
-    # @return [String] current SHA
-    def current_sha
-      sha_for(revision = nil)
+      true
     end
 
     # Determines the SHA referenced by the given revision. Raises on failure.
@@ -290,8 +288,8 @@ module RightGit
     def vet_output(*args)
       last_output = git_output(*args).strip
       logger.info(last_output) unless last_output.empty?
-      if last_output.downcase =~ /^(error|fatal): /
-        raise GitError, "git exited zero but an error was detected in output."
+      if last_output.downcase =~ /^(error|fatal):/
+        raise GitError, "Git exited zero but an error was detected in output."
       end
       true
     end
