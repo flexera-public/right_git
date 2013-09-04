@@ -160,9 +160,7 @@ module RightGit
       ]
       git_args << "--no-merges" if options[:no_merges]
       git_args << revision if revision
-
-      lines = shell.output_for("log #{args.join(' ')} #{revision}")
-      lines.map { |line| Commit.new(self, line) }.compact
+      git_output(git_args).lines.map { |line| Commit.new(self, line) }
     end
 
     # Cleans the current repository of untracked files.
