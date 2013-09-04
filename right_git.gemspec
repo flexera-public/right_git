@@ -5,17 +5,31 @@
 
 Gem::Specification.new do |s|
   s.name = %q{right_git}
-  s.version = "1.0.0"
+  s.version = "0.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tony Spataro", "Scott Messier"]
-  s.date = %q{2013-08-30}
+  s.date = %q{2013-09-04}
   s.description = %q{An assortment of git-related classes created by RightScale.}
   s.email = %q{support@rightscale.com}
   s.extra_rdoc_files = [
     "CHANGELOG.rdoc",
     "LICENSE",
     "README.rdoc"
+  ]
+  s.files = [
+    "CHANGELOG.rdoc",
+    "LICENSE",
+    "README.rdoc",
+    "Rakefile",
+    "VERSION",
+    "lib/right_git.rb",
+    "lib/right_git/branch.rb",
+    "lib/right_git/branch_collection.rb",
+    "lib/right_git/commit.rb",
+    "lib/right_git/default_shell.rb",
+    "lib/right_git/repository.rb",
+    "right_git.gemspec"
   ]
   s.homepage = %q{https://github.com/rightscale/right_git}
   s.licenses = ["MIT"]
