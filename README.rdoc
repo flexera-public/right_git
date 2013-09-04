@@ -1,0 +1,13 @@
+RightGit is an assortment of git-related classes created by RightScale.
+
+Maintained by the RightScale Teal Team
+
+== What Does It Do?
+
+=== Repository Management
+
+Provides an API for managing a git repository that is suitable for
+automation. It is assumed that gestures like creating a new repository,
+branch or tag are manual tasks beyond the scope of automation so those are
+not covered here. What is provided are APIs for cloning, fetching, listing
+and grooming git-related objects.
