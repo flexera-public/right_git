@@ -58,19 +58,22 @@ module RightGit
         :outstream        => STDOUT,
         :raise_on_failure => true,
       }.merge(options)
+      unless outstream = options[:outstream]
+        raise ::ArgumentError.new('outstream is required')
+      end
       directory = options[:directory]
       logger = options[:logger] || default_logger
 
       # build execution block.
       exitstatus = nil
       executioner = lambda do
-        puts "+ #{cmd}"
+        logger.info("+ #{cmd}")
         ::IO.popen("#{cmd} 2>&1", 'r') do |output|
           output.sync = true
           done = false
           while !done
             begin
-              options[:outstream] << output.readline
+              outstream << output.readline
             rescue ::EOFError
               done = true
             end
@@ -78,7 +81,7 @@ module RightGit
         end
         exitstatus = $?.exitstatus
         if (!$?.success? && options[:raise_on_failure])
-          fail "Execution failed with exitstatus #{exitstatus}"
+          raise ShellError, "Execution failed with exitstatus #{exitstatus}"
         end
       end
 
