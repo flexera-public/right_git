@@ -552,8 +552,22 @@ EOF
             shell_execute_options).
           and_return(show_output).
           once
-        actual_revision = subject.sha_for(revision).should
+        actual_revision = subject.sha_for(revision)
         actual_revision.should == expected_revision
+      end
+
+      it 'should detect errors' do
+        shell.
+          should_receive(:output_for).
+          with(
+            (['git', 'show'] + show_args).join(' '),
+            shell_execute_options).
+          and_return(sad_output).
+          once
+        expect { subject.sha_for(revision) }.
+          to raise_error(
+            described_class::GitError,
+            'Unable to locate commit in show output.')
       end
     end # git submodule update
 
@@ -571,7 +585,7 @@ EOF
 
     [[nil, []], ['master', ['master']]].each do |params|
       context "params = #{params.inspect}" do
-        let(:revision) { params[0] }
+        let(:revision)  { params[0] }
         let(:show_args) { params[1] }
         it_should_behave_like 'git show'
       end
