@@ -276,7 +276,7 @@ EOF
         expect { subject.branches(branches_options) }.
           to raise_error(
             ::RightGit::Branch::BranchError,
-            "Unrecognized branch info #{sad_output.lines.first.inspect}")
+            "Unrecognized branch info: #{sad_output.lines.first.inspect}")
       end
     end
 

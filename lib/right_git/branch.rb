@@ -30,8 +30,12 @@ module RightGit
   # to be sorted, matched against Regexp, and certain other string-y operations.
   class Branch
     BRANCH_NAME     = '[#A-Za-z0-9._\/-]+'
-    BRANCH_INFO     = /^(\* |  )?(#{BRANCH_NAME})( -> )?(#{BRANCH_NAME})?$/
+    BRANCH_INFO     = /^(\* |  )?(#{BRANCH_NAME})( -> #{BRANCH_NAME})?$/
     BRANCH_FULLNAME = /(remotes\/)?(#{BRANCH_NAME})/
+
+    DEFAULT_DISPLAY_WIDTH = 40
+
+    ELLIPSIS = '...'
 
     class BranchError < StandardError; end
 
@@ -48,10 +52,10 @@ module RightGit
           @remote = !!match[1]
           @repo = repo
         else
-          raise BranchError, "Unrecognized branch name #{line.inspect}"
+          raise BranchError, 'Unreachable due to already matching name pattern'
         end
       else
-        raise BranchError, "Unrecognized branch info #{line.inspect}"
+        raise BranchError, "Unrecognized branch info: #{line.inspect}"
       end
     end
 
@@ -104,18 +108,17 @@ module RightGit
       end
     end
 
-    # For display
+    # For display in a column of given width.
     #
     # @param [Integer] width for columns
     #
-    # @return [TrueClass] always true
-    def display(width = 40)
+    # @return [String] display string
+    def display(width = DEFAULT_DISPLAY_WIDTH)
       if @fullname.length >= width
-        (@fullname[0..(width - 4)] + "...").ljust(width)
+        (@fullname[0..(width - ELLIPSIS.length - 1)] + ELLIPSIS).ljust(width)
       else
         @fullname.ljust(width)
       end
-      true
     end
 
     # Deletes this (local or remote) branch.
