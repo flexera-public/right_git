@@ -68,7 +68,7 @@ module RightGit
     #
     # @return [BranchCollection] merged branches
     def merged(revision)
-      git_args = ['branch', '-r', '--merged', target]
+      git_args = ['branch', '-r', '--merged', revision]
       all_merged = @repo.git_output(git_args).lines.map do |line|
         Branch.new(@repo, line)
       end
