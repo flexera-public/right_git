@@ -355,7 +355,7 @@ EOF
     let(:expected_commits) do
       [
         { :hash => '0123456', :timestamp => 1378318888, :author => 'foo@bar.com' },
-        { :hash => '789abcd', :timestamp => 1378317777, :author => 'foo@bar.com' },
+        { :hash => '789abcd', :timestamp => 1378317777, :author => 'baz@bar.com' },
         { :hash => 'ef01234', :timestamp => 1378316666, :author => 'foo@bar.com' }
       ]
     end

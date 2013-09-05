@@ -37,11 +37,10 @@ module RightGit
     # @param [String] line of git output describing commit
     def initialize(repo, line)
       @repo = repo
-      match = COMMIT_INFO.match(line)
-      unless match && match.length >= 3
-        raise CommitError, "Unrecognized commit summary #{line.inspect}"
+      unless match = COMMIT_INFO.match(line)
+        raise CommitError, "Unrecognized commit summary: #{line.inspect}"
       end
-      @info = [ match[1], match[2], match[3] ]
+      @info = [ match[1], Integer(match[2]), match[3] ]
     end
 
     # @return [String] stringized
@@ -58,7 +57,7 @@ module RightGit
 
     # @return [Time] time of commit
     def timestamp
-      ::Time.at(@info[1].to_i)
+      ::Time.at(@info[1])
     end
 
     # @return [String] author of commit
