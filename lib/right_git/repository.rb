@@ -74,7 +74,7 @@ module RightGit
       expected_git_dir = ::File.join(destination, '.git')
       if ::File.directory?(expected_git_dir)
         raise ::ArgumentError,
-              "destination is already a git repository: #{destination.inspect}"
+              "Destination is already a git repository: #{destination.inspect}"
       end
       repo = self.new('.', options)
       repo.vet_output(git_args)

@@ -58,10 +58,10 @@ module RightGit
         :outstream        => STDOUT,
         :raise_on_failure => true,
       }.merge(options)
+
       unless outstream = options[:outstream]
         raise ::ArgumentError.new('outstream is required')
       end
-      directory = options[:directory]
       logger = options[:logger] || default_logger
 
       # build execution block.
@@ -85,12 +85,15 @@ module RightGit
         end
       end
 
-      # invoke.
-      if directory
-        ::Dir.chdir(directory) { executioner.call }
-      else
-        executioner.call
+      # directory.
+      if directory = options[:directory]
+        executioner = lambda do |e, d|
+          lambda { ::Dir.chdir(d) { e.call } }
+        end.call(executioner, directory)
       end
+
+      # invoke.
+      executioner.call
 
       return exitstatus
     end
