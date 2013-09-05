@@ -124,11 +124,15 @@ module RightGit
         :all => true
       }.merge(options)
       git_args = ['branch']
-      git_args << '--all' if options[:all]
+      git_args << '-a' if options[:all]  # note older versions of git don't accept --all
       branches = BranchCollection.new(self)
-      git_output(git_args).lines.map do |line|
-        branch = Branch.new(self, line)
-        branches << branch if branch
+      git_output(git_args).lines.each do |line|
+        # ignore the no-branch branch that git helpfully provides when current
+        # HEAD is a tag or otherwise not-a-branch.
+        unless line.strip == '* (no branch)'
+          branch = Branch.new(self, line)
+          branches << branch if branch
+        end
       end
       branches
     end

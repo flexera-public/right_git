@@ -259,7 +259,8 @@ EOF
           once
         branches = subject.branches(branches_options)
         branches.should be_a_kind_of(::RightGit::BranchCollection)
-        branches.should_not be_empty
+        branches.empty?.should == expected_branches.empty?
+        branches.size.should == expected_branches.size
         actual_branches = []
         branches.each { |branch| actual_branches << branch.fullname }
         actual_branches.sort.should == expected_branches.sort
@@ -287,7 +288,7 @@ EOF
         { 'master' => nil, 'v1.0' => nil, 'v2.0' => nil }],
       [
         {},
-        ['--all'],
+        ['-a'],
         {
           'master'      => nil,
           'v1.0'        => nil,
@@ -314,6 +315,18 @@ EOF
         end
         it_should_behave_like 'git branch'
       end
+    end
+
+    context 'when pointing to no branch' do
+      let(:branches_options)  { { :all => false } }
+      let(:git_branch_args)   { [] }
+      let(:expected_branches) { [] }
+      let(:git_branch_output) do
+<<EOF
+* (no branch)
+EOF
+      end
+      it_should_behave_like 'git branch'
     end
   end # branches
 
