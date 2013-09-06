@@ -66,11 +66,11 @@ EOF
     ::FileUtils.rm_rf(repo_dir) if ::File.directory?(repo_dir)
     ::FileUtils.mkdir_p(repo_dir)
     # sanity checks to ensure tests are not using actual git.
-    flexmock(::RightGit::DefaultShell).
+    flexmock(::RightGit::Shell::Default).
       should_receive(:execute).
       and_raise(::NotImplementedError).
       never
-    flexmock(::RightGit::DefaultShell).
+    flexmock(::RightGit::Shell::Default).
       should_receive(:output_for).
       and_raise(::NotImplementedError).
       never

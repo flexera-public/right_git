@@ -53,8 +53,8 @@ module RightGit
       else
         raise ::ArgumentError.new('A valid repo_dir is required')
       end
-      @shell = options[:shell] || DefaultShell
-      @logger = options[:logger] || DefaultShell.default_logger
+      @shell = options[:shell] || ::RightGit::Shell::Default
+      @logger = options[:logger] || ::RightGit::Shell::Default.default_logger
     end
 
     # Factory method to clone the repo given by URL to the given destination and

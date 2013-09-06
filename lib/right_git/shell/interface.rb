@@ -21,24 +21,26 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # ancestor
-require 'right_git'
+require 'right_git/shell'
 
 # local
 require 'logger'
 
-module RightGit
-  module DefaultShell
+module RightGit::Shell
 
-    class ShellError < StandardError; end
+  # Interface for a shell intended to work with RightGit.
+  module Interface
 
-    module_function
-
+    # Provides a default logger object (overridable).
+    #
     # @return [Logger] default logger for STDOUT
     def default_logger
       @default_logger ||= ::Logger.new(STDOUT)
     end
 
     # Run the given command and print the output to stdout.
+    #
+    # Must be overridden.
     #
     # @param [String] cmd the shell command to run
     # @param [Hash] options for execution
@@ -52,66 +54,22 @@ module RightGit
     # === Raises
     # RuntimeError:: if command does not complete successfully and option :raise_on_failure is true
     def execute(cmd, options = {})
-      options = {
-        :directory        => nil,
-        :logger           => nil,
-        :outstream        => STDOUT,
-        :raise_on_failure => true,
-      }.merge(options)
-
-      unless outstream = options[:outstream]
-        raise ::ArgumentError.new('outstream is required')
-      end
-      logger = options[:logger] || default_logger
-
-      # build execution block.
-      exitstatus = nil
-      executioner = lambda do
-        logger.info("+ #{cmd}")
-        ::IO.popen("#{cmd} 2>&1", 'r') do |output|
-          output.sync = true
-          done = false
-          while !done
-            begin
-              outstream << output.readline
-            rescue ::EOFError
-              done = true
-            end
-          end
-        end
-        exitstatus = $?.exitstatus
-        if (!$?.success? && options[:raise_on_failure])
-          raise ShellError, "Execution failed with exitstatus #{exitstatus}"
-        end
-      end
-
-      # directory.
-      if directory = options[:directory]
-        executioner = lambda do |e, d|
-          lambda { ::Dir.chdir(d) { e.call } }
-        end.call(executioner, directory)
-      end
-
-      # invoke.
-      executioner.call
-
-      return exitstatus
+      raise NotImplementedError
     end
 
     # Invoke a shell command and return its output as a string, similar to
     # backtick but defaulting to raising exception on failure.
     #
+    # Must be overridden.
+    #
     # === Parameters
     # @param [String] cmd command to execute
-    # @param [Hash] options for execution
+    # @param [Hash] options for execution (see execute)
     #
     # === Return
     # @return [String] entire output (stdout) of the command
     def output_for(cmd, options = {})
-      output = StringIO.new
-      execute(cmd, options.merge(:outstream => output))
-      output.string
+      raise NotImplementedError
     end
-
-  end # DefaultShell
-end # RightGit
+  end
+end

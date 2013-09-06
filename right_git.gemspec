@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tony Spataro", "Scott Messier"]
-  s.date = "2013-09-05"
+  s.date = "2013-09-06"
   s.description = "An assortment of git-related classes created by RightScale."
   s.email = "support@rightscale.com"
   s.extra_rdoc_files = [
@@ -26,8 +26,10 @@ Gem::Specification.new do |s|
     "lib/right_git/branch.rb",
     "lib/right_git/branch_collection.rb",
     "lib/right_git/commit.rb",
-    "lib/right_git/default_shell.rb",
     "lib/right_git/repository.rb",
+    "lib/right_git/shell.rb",
+    "lib/right_git/shell/default.rb",
+    "lib/right_git/shell/interface.rb",
     "right_git.gemspec"
   ]
   s.homepage = "https://github.com/rightscale/right_git"

@@ -20,13 +20,14 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-require File.expand_path('../../spec_helper', __FILE__)
+require File.expand_path('../../../spec_helper', __FILE__)
 
 require 'logger'
 require 'stringio'
 require 'tmpdir'
 
-describe RightGit::DefaultShell do
+describe RightGit::Shell::Default do
+
   let(:logger)        { flexmock('logger') }
   let(:is_windows)    { !!(RUBY_PLATFORM =~ /mswin|win32|dos|mingw|cygwin/) }
   let(:command_shell) { is_windows ? 'cmd.exe /C' : 'sh -c' }
@@ -41,7 +42,7 @@ describe RightGit::DefaultShell do
     { :logger => logger, :outstream => outstream }
   end
 
-  subject { ::RightGit::DefaultShell }
+  subject { ::RightGit::Shell::Default }
 
   context '#default_logger' do
     it 'should have a default logger' do
@@ -99,7 +100,7 @@ describe RightGit::DefaultShell do
         once
       expect { subject.execute(cmd, shell_execute_options) }.
         to raise_error(
-          described_class::ShellError,
+          ::RightGit::Shell::ShellError,
           "Execution failed with exitstatus 99")
     end
 
