@@ -51,8 +51,7 @@ module RightGit::Shell
     #
     # @return [Integer] exitstatus of the command
     #
-    # === Raises
-    # RuntimeError:: if command does not complete successfully and option :raise_on_failure is true
+    # @raise [ShellError] on failure only if :raise_on_failure is true
     def execute(cmd, options = {})
       raise NotImplementedError
     end
@@ -62,12 +61,10 @@ module RightGit::Shell
     #
     # Must be overridden.
     #
-    # === Parameters
     # @param [String] cmd command to execute
     # @param [Hash] options for execution (see execute)
     #
-    # === Return
-    # @return [String] entire output (stdout) of the command
+    # @raise [ShellError] on failure only if :raise_on_failure is true
     def output_for(cmd, options = {})
       raise NotImplementedError
     end

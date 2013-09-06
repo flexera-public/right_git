@@ -41,8 +41,7 @@ module RightGit::Shell
     #
     # @return [Integer] exitstatus of the command
     #
-    # === Raises
-    # RuntimeError:: if command does not complete successfully and option :raise_on_failure is true
+    # @raise [ShellError] on failure only if :raise_on_failure is true
     def execute(cmd, options = {})
       options = {
         :directory        => nil,
@@ -92,12 +91,12 @@ module RightGit::Shell
 
     # Implements output_for interface.
     #
-    # === Parameters
     # @param [String] cmd command to execute
     # @param [Hash] options for execution
     #
-    # === Return
     # @return [String] entire output (stdout) of the command
+    #
+    # @raise [ShellError] on failure only if :raise_on_failure is true
     def output_for(cmd, options = {})
       output = StringIO.new
       execute(cmd, options.merge(:outstream => output))
