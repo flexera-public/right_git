@@ -441,6 +441,55 @@ EOF
     end
   end # clean_all
 
+  context '#checkout_to' do
+    shared_examples_for 'git checkout' do
+      it 'should checkout' do
+        shell.
+          should_receive(:output_for).
+          with(
+            (['git', 'checkout'] + checkout_args).join(' '),
+            shell_execute_options).
+          and_return(happy_output).
+          once
+        logger.
+          should_receive(:info).
+          with(happy_output.strip).
+          and_return(true).
+          once
+        subject.checkout_to(revision, checkout_options).should be_true
+      end
+
+      it 'should detect errors' do
+        shell.
+          should_receive(:output_for).
+          with(
+            (['git', 'checkout'] + checkout_args).join(' '),
+            shell_execute_options).
+          and_return(sad_output).
+          once
+        logger.
+          should_receive(:info).
+          with(sad_output.strip).
+          and_return(true).
+          once
+        expect { subject.checkout_to(revision, checkout_options) }.
+          to raise_error(described_class::GitError, vet_error)
+      end
+    end # git checkout
+
+    [
+      ['foo', {}, ['foo']],
+      ['master', { :force => true }, ['master', '--force']]
+    ].each do |params|
+      context "params = #{params.inspect}" do
+        let(:revision)         { params[0] }
+        let(:checkout_options) { params[1] }
+        let(:checkout_args)    { params[2] }
+        it_should_behave_like 'git checkout'
+      end
+    end
+  end # checkout_to
+
   context '#hard_reset_to' do
     shared_examples_for 'git reset' do
       it 'should reset' do
@@ -496,7 +545,7 @@ EOF
             shell_execute_options).
           and_return(submodule_output).
           once
-        actual_submodules = subject.submodule_paths(recursive)
+        actual_submodules = subject.submodule_paths(submodule_options)
         actual_submodules.should == expected_submodules
       end
 
@@ -508,7 +557,7 @@ EOF
             shell_execute_options).
           and_return(sad_output).
           once
-        expect { subject.submodule_paths(recursive) }.
+        expect { subject.submodule_paths(submodule_options) }.
           to raise_error(
             described_class::GitError,
             "Unexpected output from submodule status: #{sad_output.lines.first.chomp.inspect}")
@@ -523,10 +572,10 @@ EOF
 EOF
     end
 
-    [[false, []], [true, ['--recursive']]].each do |params|
+    [[{}, []], [{:recursive => true}, ['--recursive']]].each do |params|
       context "params = #{params.inspect}" do
-        let(:recursive)      { params[0] }
-        let(:submodule_args) { params[1] }
+        let(:submodule_options) { params[0] }
+        let(:submodule_args)    { params[1] }
         it_should_behave_like 'git submodule status'
       end
     end
@@ -542,14 +591,14 @@ EOF
             shell_execute_options).
           and_return(true).
           once
-        subject.update_submodules(recursive).should be_true
+        subject.update_submodules(submodule_options).should be_true
       end
     end # git submodule update
 
-    [[false, []], [true, ['--recursive']]].each do |params|
+    [[{}, []], [{ :recursive => true }, ['--recursive']]].each do |params|
       context "params = #{params.inspect}" do
-        let(:recursive)      { params[0] }
-        let(:submodule_args) { params[1] }
+        let(:submodule_options) { params[0] }
+        let(:submodule_args)    { params[1] }
         it_should_behave_like 'git submodule update'
       end
     end

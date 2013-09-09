@@ -188,6 +188,23 @@ module RightGit
       true
     end
 
+    # Checkout.
+    #
+    # @param [String] revision for checkout
+    # @param [Hash] options for checkout
+    # @option options [TrueClass|FalseClass] :force as true to force checkout
+    #
+    # @return [TrueClass] always true
+    def checkout_to(revision, options = {})
+      options = {
+        :force => false
+      }.merge(options)
+      git_args = ['checkout', revision]
+      git_args << '--force' if options[:force]
+      vet_output(git_args)
+      true
+    end
+
     # Performs a hard reset to the given revision, if given, or else the last
     # checked-out SHA.
     #
@@ -203,12 +220,16 @@ module RightGit
 
     # Queries the recursive list of submodule paths for the current workspace.
     #
-    # @param [TrueClass|FalseClass] recursive if true will recursively get paths
+    # @param [Hash] options for submodules
+    # @option options [TrueClass|FalseClass] :recursive as true to recursively get submodule paths
     #
     # @return [Array] list of submodule paths or empty
-    def submodule_paths(recursive = false)
+    def submodule_paths(options = {})
+      options = {
+        :recursive => false
+      }.merge(options)
       git_args = ['submodule', 'status']
-      git_args << '--recursive' if recursive
+      git_args << '--recursive' if options[:recursive]
       git_output(git_args).lines.map do |line|
         data = line.chomp
         if matched = SUBMODULE_STATUS_REGEX.match(data)
@@ -222,12 +243,16 @@ module RightGit
 
     # Updates submodules for the current workspace.
     #
-    # @param [TrueClass|FalseClass] recursive if true will recursively get paths
+    # @param [Hash] options for submodules
+    # @option options [TrueClass|FalseClass] :recursive as true to recursively update submodules
     #
     # @return [TrueClass] always true
-    def update_submodules(recursive = false)
+    def update_submodules(options = {})
+      options = {
+        :recursive => false
+      }.merge(options)
       git_args = ['submodule', 'update', '--init']
-      git_args << '--recursive' if recursive
+      git_args << '--recursive' if options[:recursive]
       spit_output(git_args)
       true
     end
