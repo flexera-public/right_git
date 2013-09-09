@@ -100,7 +100,7 @@ module RightGit
     # Fetches branch and tag information from remote origin.
     #
     # @param [Hash] options for fetch all
-    # @option options [Object] [TrueClass|FalseClass] :prune as true to prune dead branches
+    # @option options [TrueClass|FalseClass] :prune as true to prune dead branches
     #
     # @return [TrueClass] always true
     def fetch_all(options = {})
