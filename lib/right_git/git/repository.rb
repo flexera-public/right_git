@@ -21,9 +21,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # ancestor
-require 'right_git'
+require 'right_git/git'
 
-module RightGit
+module RightGit::Git
 
   # Provides an API for managing a git repository that is suitable for
   # automation. It is assumed that gestures like creating a new repository,
@@ -34,8 +34,6 @@ module RightGit
     COMMIT_SHA1_REGEX = /^commit ([0-9a-fA-F]{40})$/
 
     SUBMODULE_STATUS_REGEX = /^([+\- ])([0-9a-fA-F]{40}) (.*) (.*)$/
-
-    class GitError < StandardError; end
 
     attr_reader :repo_dir, :logger, :shell
 

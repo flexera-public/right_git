@@ -20,10 +20,16 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Autoload everything possible
-module RightGit
-  class RightGitError < StandardError; end
+# ancestor
+require 'right_git'
 
-  autoload :Git,   'right_git/git'
-  autoload :Shell, 'right_git/shell'
+module RightGit
+  module Git
+    class GitError < RightGitError; end
+
+    autoload :Branch,           'right_git/git/branch'
+    autoload :BranchCollection, 'right_git/git/branch_collection'
+    autoload :Commit,           'right_git/git/commit'
+    autoload :Repository,       'right_git/git/repository'
+  end
 end

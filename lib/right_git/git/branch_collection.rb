@@ -21,9 +21,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # ancestor
-require 'right_git'
+require 'right_git/git'
 
-module RightGit
+module RightGit::Git
 
   # A collection of Git branches. Acts a bit like an Array, allowing it to be
   # mapped, sorted and compared as such.

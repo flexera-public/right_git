@@ -21,9 +21,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # ancestor
-require 'right_git'
+require 'right_git/git'
 
-module RightGit
+module RightGit::Git
 
   # A commit within a Git repository.
   class Commit
@@ -33,7 +33,7 @@ module RightGit
 
     attr_reader :repo
 
-    class CommitError < StandardError; end
+    class CommitError < GitError; end
 
     # @param [Repository] repo hosting commit
     # @param [String] line of git output describing commit

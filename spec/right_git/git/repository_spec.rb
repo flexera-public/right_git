@@ -20,12 +20,13 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-require File.expand_path('../../spec_helper', __FILE__)
+require File.expand_path('../../../spec_helper', __FILE__)
 
 require 'tmpdir'
 
-module RightGit
+module RightGit::Git
   class RepositorySpec
+    GIT_ERROR = GitError
     TEMP_DIR  = ::File.join(::Dir.tmpdir, 'right_git-repository-3b5e5cd0495e6af9942206efa2626c6e')
     REPO_NAME = 'bar'
     REPO_URL  = "git@github.com:foo/#{REPO_NAME}.git"
@@ -33,14 +34,14 @@ module RightGit
   end
 end
 
-describe RightGit::Repository do
-  let(:shell)     { flexmock('shell') }
-  let(:logger)    { flexmock('logger') }
-  let(:repo_url)  { ::RightGit::RepositorySpec::REPO_URL }
-  let(:repo_name) { ::RightGit::RepositorySpec::REPO_NAME }
-  let(:repo_dir)  { ::RightGit::RepositorySpec::REPO_DIR }
-  let(:temp_dir)  { ::RightGit::RepositorySpec::TEMP_DIR }
-
+describe RightGit::Git::Repository do
+  let(:error_class)  { ::RightGit::Git::RepositorySpec::GIT_ERROR }
+  let(:shell)        { flexmock('shell') }
+  let(:logger)       { flexmock('logger') }
+  let(:repo_url)     { ::RightGit::Git::RepositorySpec::REPO_URL }
+  let(:repo_name)    { ::RightGit::Git::RepositorySpec::REPO_NAME }
+  let(:repo_dir)     { ::RightGit::Git::RepositorySpec::REPO_DIR }
+  let(:temp_dir)     { ::RightGit::Git::RepositorySpec::TEMP_DIR }
   let(:vet_error)    { 'Git exited zero but an error was detected in output.' }
   let(:happy_output) do
 <<EOF
@@ -123,7 +124,7 @@ EOF
             once
           expect {
             described_class.clone_to(repo_url, directory, repo_options)
-          }.to raise_error(described_class::GitError, vet_error)
+          }.to raise_error(error_class, vet_error)
         end
       end
     end
@@ -134,10 +135,10 @@ EOF
 
     [
       [
-        ::RightGit::RepositorySpec::TEMP_DIR,
-        ::RightGit::RepositorySpec::REPO_NAME
+        ::RightGit::Git::RepositorySpec::TEMP_DIR,
+        ::RightGit::Git::RepositorySpec::REPO_NAME
       ],
-      [::Dir.pwd, ::RightGit::RepositorySpec::REPO_DIR]
+      [::Dir.pwd, ::RightGit::Git::RepositorySpec::REPO_DIR]
     ].each do |params|
       context "" do
         let(:base_dir)  { params[0] }
@@ -179,7 +180,7 @@ EOF
           and_return(true).
           once
         expect { subject.fetch(*fetch_args) }.
-          to raise_error(described_class::GitError, vet_error)
+          to raise_error(error_class, vet_error)
       end
     end # git fetch
 
@@ -231,7 +232,7 @@ EOF
           and_return(true).
           once
         expect { subject.fetch_all(fetch_all_options) }.
-          to raise_error(described_class::GitError, vet_error)
+          to raise_error(error_class, vet_error)
       end
     end # git fetch all
 
@@ -258,7 +259,7 @@ EOF
           and_return(git_branch_output).
           once
         branches = subject.branches(branches_options)
-        branches.should be_a_kind_of(::RightGit::BranchCollection)
+        branches.should be_a_kind_of(::RightGit::Git::BranchCollection)
         branches.empty?.should == expected_branches.empty?
         branches.size.should == expected_branches.size
         actual_branches = []
@@ -276,7 +277,7 @@ EOF
           once
         expect { subject.branches(branches_options) }.
           to raise_error(
-            ::RightGit::Branch::BranchError,
+            ::RightGit::Git::Branch::BranchError,
             "Unrecognized branch info: #{sad_output.lines.first.inspect}")
       end
     end
@@ -353,7 +354,7 @@ EOF
           once
         actual = subject.log(revision, log_options)
         actual.should_not be_empty
-        actual.first.should be_a_kind_of(::RightGit::Commit)
+        actual.first.should be_a_kind_of(::RightGit::Git::Commit)
         actual_commits = actual.map do |commit|
           {
             :hash      => commit.hash,
@@ -479,7 +480,7 @@ EOF
           and_return(true).
           once
         expect { subject.checkout_to(revision, checkout_options) }.
-          to raise_error(described_class::GitError, vet_error)
+          to raise_error(error_class, vet_error)
       end
     end # git checkout
 
@@ -528,7 +529,7 @@ EOF
           and_return(true).
           once
         expect { subject.hard_reset_to(revision) }.
-          to raise_error(described_class::GitError, vet_error)
+          to raise_error(error_class, vet_error)
       end
     end # git reset
 
@@ -565,7 +566,7 @@ EOF
           once
         expect { subject.submodule_paths(submodule_options) }.
           to raise_error(
-            described_class::GitError,
+            error_class,
             "Unexpected output from submodule status: #{sad_output.lines.first.chomp.inspect}")
       end
     end # git submodule status
@@ -634,7 +635,7 @@ EOF
           once
         expect { subject.sha_for(revision) }.
           to raise_error(
-            described_class::GitError,
+            error_class,
             'Unable to locate commit in show output.')
       end
     end # git submodule update

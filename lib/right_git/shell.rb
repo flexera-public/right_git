@@ -25,7 +25,7 @@ require 'right_git'
 
 module RightGit
   module Shell
-    class ShellError < StandardError; end
+    class ShellError < RightGitError; end
 
     autoload :Default,   'right_git/shell/default'
     autoload :Interface, 'right_git/shell/interface'

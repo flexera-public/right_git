@@ -20,11 +20,11 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-require File.expand_path('../../spec_helper', __FILE__)
+require File.expand_path('../../../spec_helper', __FILE__)
 
 require 'digest/sha1'
 
-describe RightGit::Commit do
+describe RightGit::Git::Commit do
 
   let(:repo) { flexmock('repo') }
 

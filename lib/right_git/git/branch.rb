@@ -21,9 +21,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # ancestor
-require 'right_git'
+require 'right_git/git'
 
-module RightGit
+module RightGit::Git
 
   # A branch in a Git repository. Has some proxy methods that make it act a bit
   # like a string, whose value is the name of the branch. This allows branches
@@ -37,7 +37,7 @@ module RightGit
 
     ELLIPSIS = '...'
 
-    class BranchError < StandardError; end
+    class BranchError < GitError; end
 
     attr_reader :repo, :fullname
 
