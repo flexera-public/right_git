@@ -180,10 +180,22 @@ module RightGit
 
     # Cleans everything and optionally cleans .gitignored files.
     #
+    # @param [Hash] options for checkout
+    # @option options [TrueClass|FalseClass] :directories as true to clean untracked directories (but not untracked submodules)
+    # @option options [TrueClass|FalseClass] :gitignored as true to clean gitignored (untracked) files
+    # @option options [TrueClass|FalseClass] :submodules as true to clean untracked submodules (requires force)
+    #
     # @return [TrueClass] always true
-    def clean_all(clean_gitignored = false)
-      git_args = ['-d', '-f', '-f']  # double-tap -f to kill untracked submodules
-      git_args << '-x' if clean_gitignored
+    def clean_all(options = {})
+      options = {
+        :directories => false,
+        :gitignored  => false,
+        :submodules  => false,
+      }.merge(options)
+      git_args = ['-f']  # force is required or else -n only lists files.
+      git_args << '-f' if options[:submodules]  # double-tap -f to kill untracked submodules
+      git_args << '-d' if options[:directories]
+      git_args << '-x' if options[:gitignored]
       clean(git_args)
       true
     end

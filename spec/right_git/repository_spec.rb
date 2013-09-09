@@ -424,18 +424,24 @@ EOF
         shell.
           should_receive(:execute).
           with(
-            (['git', 'clean', '-d', '-f', '-f'] + clean_all_args).join(' '),
+            (['git', 'clean', '-f'] + clean_all_args).join(' '),
             shell_execute_options).
           and_return(true).
           once
-        subject.clean_all(clean_gitignored).should be_true
+        subject.clean_all(clean_options).should be_true
       end
     end # git clean all
 
-    [[false, []], [true, ['-x']]].each do |params|
+    [
+      [{}, []],
+      [
+        { :directories => true, :gitignored => true, :submodules => true },
+        ['-f', '-d', '-x']
+      ]
+    ].each do |params|
       context "params = #{params.inspect}" do
-        let(:clean_gitignored) { params[0] }
-        let(:clean_all_args)   { params[1] }
+        let(:clean_options)  { params[0] }
+        let(:clean_all_args) { params[1] }
         it_should_behave_like 'git clean all'
       end
     end
