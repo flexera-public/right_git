@@ -29,6 +29,8 @@ module RightGit
   class Commit
     COMMIT_INFO = /^([0-9A-Fa-f]+) ([0-9]+) (.*)$/
 
+    COMMIT_SHA1_REGEX = /^[0-9a-fA-F]{40}$/
+
     attr_reader :repo
 
     class CommitError < StandardError; end
@@ -63,6 +65,11 @@ module RightGit
     # @return [String] author of commit
     def author
       @info[2]
+    end
+
+    # @return [TrueClass|FalseClass] true if the given revision is a (fully qualified, not abbreviated) commit SHA
+    def self.sha?(revision)
+      !!COMMIT_SHA1_REGEX.match(revision)
     end
 
   end # Commit

@@ -22,6 +22,8 @@
 
 require File.expand_path('../../spec_helper', __FILE__)
 
+require 'digest/sha1'
+
 describe RightGit::Commit do
 
   let(:repo) { flexmock('repo') }
@@ -55,6 +57,16 @@ describe RightGit::Commit do
       expect { subject }.to raise_error(
         described_class::CommitError,
         "Unrecognized commit summary: #{commit_line.inspect}")
+    end
+  end
+
+  context '.sha?' do
+    it 'should be true when given a SHA' do
+      described_class.sha?(::Digest::SHA1.hexdigest('meat')).should be_true
+    end
+
+    it 'should be false otherwise' do
+      described_class.sha?('potatoes').should be_false
     end
   end
 
