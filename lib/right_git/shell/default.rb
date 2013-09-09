@@ -25,6 +25,7 @@ require 'right_git/shell'
 
 # local
 require 'logger'
+require 'stringio'
 
 module RightGit::Shell
 
