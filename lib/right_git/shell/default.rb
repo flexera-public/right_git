@@ -36,19 +36,14 @@ module RightGit::Shell
     module_function
 
     # Implements execute interface.
-    #
-    # @param [String] cmd the shell command to run
-    # @param [Hash] options for execution
-    #
-    # @return [Integer] exitstatus of the command
-    #
-    # @raise [ShellError] on failure only if :raise_on_failure is true
     def execute(cmd, options = {})
       options = {
         :directory        => nil,
         :logger           => nil,
         :outstream        => STDOUT,
         :raise_on_failure => true,
+        :set_env_vars     => nil,
+        :clear_env_vars   => nil,
       }.merge(options)
 
       unless outstream = options[:outstream]
@@ -77,31 +72,91 @@ module RightGit::Shell
         end
       end
 
-      # directory.
-      if directory = options[:directory]
-        executioner = lambda do |e, d|
-          lambda { ::Dir.chdir(d) { e.call } }
-        end.call(executioner, directory)
-      end
-
-      # invoke.
-      executioner.call
+      # configure and invoke.
+      configure_executioner(executioner, options).call
 
       return exitstatus
     end
 
     # Implements output_for interface.
-    #
-    # @param [String] cmd command to execute
-    # @param [Hash] options for execution
-    #
-    # @return [String] entire output (stdout) of the command
-    #
-    # @raise [ShellError] on failure only if :raise_on_failure is true
     def output_for(cmd, options = {})
       output = StringIO.new
       execute(cmd, options.merge(:outstream => output))
       output.string
+    end
+
+    # Encapsulates the given executioner with child-process-modifying behavior
+    # based on options. Builds the executioner as a series of callbacks.
+    #
+    # @param [Proc] executioner to configure
+    # @param [Hash] options for execution
+    #
+    # @return [Proc] configured executioner
+    def configure_executioner(executioner, options)
+      # set specific environment variables, if requested.
+      sev = options[:set_env_vars]
+      if (sev && !sev.empty?)
+        executioner = lambda do |e|
+          lambda { set_env_vars(sev) { e.call } }
+        end.call(executioner)
+      end
+
+      # clear specific environment variables, if requested.
+      cev = options[:clear_env_vars]
+      if (cev && !cev.empty?)
+        executioner = lambda do |e|
+          lambda { clear_env_vars(cev) { e.call } }
+        end.call(executioner)
+      end
+
+      # working directory.
+      if directory = options[:directory]
+        executioner = lambda do |e, d|
+          lambda { ::Dir.chdir(d) { e.call } }
+        end.call(executioner, directory)
+      end
+      executioner
+    end
+
+    # Sets the given list of environment variables while
+    # executing the given block.
+    #
+    # === Parameters
+    # @param [Hash] variables to set
+    #
+    # === Yield
+    # @yield [] called with environment set
+    #
+    # === Return
+    # @return [TrueClass] always true
+    def set_env_vars(variables)
+      save_vars = {}
+      variables.each { |k, v| save_vars[k] = ENV[k]; ENV[k] = v }
+      begin
+        yield
+      ensure
+        variables.each_key { |k| ENV[k] = save_vars[k] }
+      end
+      true
+    end
+
+    # Clears (set-to-nil) the given list of environment variables while
+    # executing the given block.
+    #
+    # @param [Array] names of variables to clear
+    #
+    # @yield [] called with environment cleared
+    #
+    # @return [TrueClass] always true
+    def clear_env_vars(names, &block)
+      save_vars = {}
+      names.each { |k| save_vars[k] = ENV[k]; ENV[k] = nil }
+      begin
+        yield
+      ensure
+        names.each { |k| ENV[k] = save_vars[k] }
+      end
+      true
     end
 
   end # Default

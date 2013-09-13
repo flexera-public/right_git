@@ -68,7 +68,7 @@ module RightGit::Git
     # @return [Repository] new repository
     def self.clone_to(repo_url, destination, options = {})
       destination = ::File.expand_path(destination)
-      git_args = ['clone', repo_url, destination]
+      git_args = ['clone', '--', repo_url, destination]
       expected_git_dir = ::File.join(destination, '.git')
       if ::File.directory?(expected_git_dir)
         raise ::ArgumentError,
@@ -296,11 +296,7 @@ module RightGit::Git
     #
     # @return [String] output
     def git_output(*args)
-      cmd = ['git', Array(args)].flatten
-      return shell.output_for(
-        cmd.join(' '),
-        :logger    => logger,
-        :directory => @repo_dir)
+      inner_execute(:output_for, args)
     end
 
     # Prints the output for a git command.  Raises on failure.
@@ -309,12 +305,7 @@ module RightGit::Git
     #
     # @return [TrueClass] always true
     def spit_output(*args)
-      cmd = ['git', Array(args)].flatten
-      shell.execute(
-        cmd.join(' '),
-        :logger    => logger,
-        :directory => @repo_dir)
-      true
+      inner_execute(:execute, args)
     end
 
     # msysgit on Windows exits zero even when checkout|reset|fetch fails so we
@@ -331,6 +322,21 @@ module RightGit::Git
         raise GitError, "Git exited zero but an error was detected in output."
       end
       true
+    end
+
+    private
+
+    # git defaults to working in the current directory but is sensitive to
+    # GIT_ env vars. we prefer the working directory so ensure any GIT_ that
+    # override the working directory are cleared.
+    CLEAR_GIT_ENV_VARS = ['GIT_DIR', 'GIT_INDEX_FILE', 'GIT_WORK_TREE'].freeze
+
+    def inner_execute(shell_method, git_args)
+      shell.method(shell_method).call(
+        ['git', git_args].flatten.join(' '),
+        :logger => logger,
+        :directory => @repo_dir,
+        :clear_env_vars => CLEAR_GIT_ENV_VARS)
     end
 
   end # Repository

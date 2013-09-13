@@ -48,6 +48,8 @@ module RightGit::Shell
     # @option options :logger [Logger] logger for shell execution (default = STDOUT)
     # @option options :outstream [IO] output stream to receive STDOUT and STDERR from command (default = STDOUT)
     # @option options :raise_on_failure [TrueClass|FalseClass] if true, wil raise a RuntimeError if the command does not end successfully (default), false to ignore errors
+    # @option options :set_env_vars [Hash] environment variables to set during execution (default = none set)
+    # @option options :clear_env_vars [Hash] environment variables to clear during execution (default = none cleared but see :clean_bundler_env)
     #
     # @return [Integer] exitstatus of the command
     #

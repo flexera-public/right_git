@@ -59,7 +59,13 @@ EOF
 
   let(:repo_options) { { :logger => logger, :shell => shell } }
 
-  let(:shell_execute_options) { { :logger => logger, :directory => repo_dir } }
+  let(:shell_execute_options) do
+    {
+      :clear_env_vars => ['GIT_DIR', 'GIT_INDEX_FILE', 'GIT_WORK_TREE'],
+      :logger => logger,
+      :directory => repo_dir
+    }
+  end
 
   subject { described_class.new(repo_dir, repo_options) }
 
@@ -88,7 +94,7 @@ EOF
           shell.
             should_receive(:output_for).
             with(
-              "git clone #{repo_url} #{repo_dir}",
+              "git clone -- #{repo_url} #{repo_dir}",
               shell_execute_options.merge(:directory => base_dir)).
             and_return do
               ::FileUtils.mkdir_p(::File.join(repo_dir, '.git'))
@@ -113,7 +119,7 @@ EOF
           shell.
             should_receive(:output_for).
             with(
-              "git clone #{repo_url} #{repo_dir}",
+              "git clone -- #{repo_url} #{repo_dir}",
               shell_execute_options.merge(:directory => base_dir)).
             and_return(sad_output).
             once
