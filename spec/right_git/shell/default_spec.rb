@@ -58,6 +58,11 @@ describe RightGit::Shell::Default do
         with("+ #{cmd}").
         and_return(true).
         once
+      logger.
+        should_receive(:info).
+        with(expected_message.strip).
+        and_return(true).
+        once
       outstream.
         should_receive(:<<).
         with(expected_message).
@@ -75,14 +80,20 @@ describe RightGit::Shell::Default do
         else
           cmd = 'pwd'
         end
+        expected_output = expected_dir + (is_windows ? " \n" : "\n")
         logger.
           should_receive(:info).
           with("+ #{cmd}").
           and_return(true).
           once
+        logger.
+          should_receive(:info).
+          with(expected_output.strip).
+          and_return(true).
+          once
         outstream.
           should_receive(:<<).
-          with(expected_dir + (is_windows ? " \n" : "\n")).
+          with(expected_output).
           and_return(true).
           once
         actual = subject.execute(
@@ -123,6 +134,11 @@ describe RightGit::Shell::Default do
       logger.
         should_receive(:info).
         with("+ #{cmd}").
+        and_return(true).
+        once
+      logger.
+        should_receive(:info).
+        with(expected_message.strip).
         and_return(true).
         once
       actual_message = subject.output_for(cmd, shell_execute_options)

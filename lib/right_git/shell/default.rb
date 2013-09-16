@@ -40,16 +40,13 @@ module RightGit::Shell
       options = {
         :directory        => nil,
         :logger           => nil,
-        :outstream        => STDOUT,
+        :outstream        => nil,
         :raise_on_failure => true,
         :set_env_vars     => nil,
         :clear_env_vars   => nil,
       }.merge(options)
-
-      unless outstream = options[:outstream]
-        raise ::ArgumentError.new('outstream is required')
-      end
       logger = options[:logger] || default_logger
+      outstream = options[:outstream]
 
       # build execution block.
       exitstatus = nil
@@ -60,7 +57,9 @@ module RightGit::Shell
           done = false
           while !done
             begin
-              outstream << output.readline
+              data = output.readline
+              logger.info(data.strip)
+              (outstream << data) if outstream
             rescue ::EOFError
               done = true
             end
