@@ -114,7 +114,7 @@ module RightGit::Git
     # directory.
     #
     # @param [Hash] options for branches
-    # @option options [TrueClass|FalseClass] :all is true to include remote branches, else local only (default)
+    # @option options [TrueClass|FalseClass] :all is true to include remote branches (default), else local only
     #
     # @return [Array] list of branches
     def branches(options = {})
