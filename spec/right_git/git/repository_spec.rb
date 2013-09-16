@@ -442,6 +442,11 @@ EOF
           'foo',
           { :tail => 3, :no_merges => true, :full_hashes => true },
           ['-n3', '--format="%H %at %aE"', '--no-merges foo']
+        ],
+        [
+          nil,
+          { :tail => 7, :skip => 4, :full_hashes => true },
+          ['-n7', '--format="%H %at %aE"', '--skip 4']
         ]
       ].each do |params|
         context "params = #{params.inspect[0..31]}..." do
