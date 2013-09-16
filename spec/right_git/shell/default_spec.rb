@@ -58,11 +58,6 @@ describe RightGit::Shell::Default do
         with("+ #{cmd}").
         and_return(true).
         once
-      logger.
-        should_receive(:info).
-        with(expected_message.strip).
-        and_return(true).
-        once
       outstream.
         should_receive(:<<).
         with(expected_message).
@@ -84,11 +79,6 @@ describe RightGit::Shell::Default do
         logger.
           should_receive(:info).
           with("+ #{cmd}").
-          and_return(true).
-          once
-        logger.
-          should_receive(:info).
-          with(expected_output.strip).
           and_return(true).
           once
         outstream.
@@ -126,10 +116,8 @@ describe RightGit::Shell::Default do
         cmd, shell_execute_options.merge(:raise_on_failure => false))
       actual.should == 99
     end
-  end # execute
 
-  context '#output_for' do
-    it 'should execute and return output' do
+    it 'should execute info logging when outstream is nil' do
       cmd = "#{command_shell} \"echo #{message}\""
       logger.
         should_receive(:info).
@@ -139,6 +127,18 @@ describe RightGit::Shell::Default do
       logger.
         should_receive(:info).
         with(expected_message.strip).
+        and_return(true).
+        once
+      subject.execute(cmd, shell_execute_options.merge(:outstream => nil)).should == 0
+    end
+  end # execute
+
+  context '#output_for' do
+    it 'should execute and return output' do
+      cmd = "#{command_shell} \"echo #{message}\""
+      logger.
+        should_receive(:info).
+        with("+ #{cmd}").
         and_return(true).
         once
       actual_message = subject.output_for(cmd, shell_execute_options)

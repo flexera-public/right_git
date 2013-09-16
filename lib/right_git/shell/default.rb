@@ -58,8 +58,11 @@ module RightGit::Shell
           while !done
             begin
               data = output.readline
-              logger.info(data.strip)
-              (outstream << data) if outstream
+              if outstream
+                outstream << data
+              else
+                logger.info(data.strip)
+              end
             rescue ::EOFError
               done = true
             end
