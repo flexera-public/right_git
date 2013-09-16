@@ -110,6 +110,15 @@ module RightGit::Git
       true
     end
 
+    # Factory method for a branch object referencing this repository.
+    #
+    # @param [String] branch_name for reference
+    #
+    # @return [Branch] new branch
+    def branch_for(branch_name)
+      Branch.new(self, branch_name)
+    end
+
     # Generates a list of known (checked-out) branches from the current git
     # directory.
     #
@@ -135,11 +144,20 @@ module RightGit::Git
       branches
     end
 
+    # Factory method for a tag object referencing this repository.
+    #
+    # @param [String] tag_name for reference
+    #
+    # @return [Branch] new branch
+    def tag_for(tag_name)
+      Tag.new(self, tag_name)
+    end
+
     # Generates a list of known (fetched) tags from the current git directory.
     #
     # @return [Array] list of tags
     def tags
-      git_output('tag').lines.map { |line| line.strip }
+      git_output('tag').lines.map { |line| Tag.new(self, line.strip) }
     end
 
     # Generates a list of commits using the given 'git log' arguments.
@@ -148,17 +166,19 @@ module RightGit::Git
     # @param [Hash] options for log
     # @option options [Integer] :tail as max history of log
     # @option options [TrueClass|FalseClass] :no_merges as true to exclude merge commits
+    # @option options [TrueClass|FalseClass] :full_hashes as true show full hashes, false for (7-character) abbreviations
     #
     # @return [Array] list of commits
     def log(revision, options = {})
       options = {
-        :tail      => 1_000,
-        :no_merges => false,
+        :tail        => 1_000,
+        :no_merges   => false,
+        :full_hashes => false,
       }.merge(options)
       git_args = [
         'log',
         "-n#{options[:tail]}",
-        "--format=\"%h %at %aE\""  # double-quotes are Windows friendly
+        "--format=\"%#{options[:full_hashes] ? 'H' : 'h'} %at %aE\""  # double-quotes are Windows friendly
       ]
       git_args << "--no-merges" if options[:no_merges]
       git_args << revision if revision

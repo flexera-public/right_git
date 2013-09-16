@@ -49,7 +49,7 @@ module RightGit::Git
         match = BRANCH_FULLNAME.match(fullname)
         if match
           @fullname = match[2]
-          @remote = !!match[1]
+          @remote = !!(match[1] || fullname.index('/'))
           @repo = repo
         else
           raise BranchError, 'Unreachable due to already matching name pattern'
@@ -122,11 +122,13 @@ module RightGit::Git
     end
 
     # Deletes this (local or remote) branch.
+    #
+    # @return [TrueClass] always true
     def delete
       if self.remote?
         @repo.vet_output("push origin :#{self.name}")
       else
-        @repo.spit_output("branch -D #{@fullname}")
+        @repo.vet_output("branch -D #{@fullname}")
       end
       true
     end

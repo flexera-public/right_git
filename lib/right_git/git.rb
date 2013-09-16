@@ -31,5 +31,6 @@ module RightGit
     autoload :BranchCollection, 'right_git/git/branch_collection'
     autoload :Commit,           'right_git/git/commit'
     autoload :Repository,       'right_git/git/repository'
+    autoload :Tag,              'right_git/git/tag'
   end
 end

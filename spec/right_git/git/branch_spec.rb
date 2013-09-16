@@ -69,7 +69,7 @@ describe RightGit::Git::Branch do
 
     it 'should delete' do
       repo.
-        should_receive(:spit_output).
+        should_receive(:vet_output).
         with("branch -D #{branch_name}").
         and_return(true).
         once

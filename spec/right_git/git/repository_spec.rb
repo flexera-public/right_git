@@ -254,6 +254,15 @@ EOF
     end
   end # fetch_all
 
+  context '#branch_for' do
+    let(:branch_name) { 'z_branch' }
+
+    it 'should make branch' do
+      actual = subject.branch_for(branch_name)
+      actual.should == ::RightGit::Git::Branch.new(subject, branch_name)
+    end
+  end # branch_for
+
   context '#branches' do
     shared_examples_for 'git branch' do
       it 'should enumerate branches' do
@@ -337,6 +346,15 @@ EOF
     end
   end # branches
 
+  context '#tag_for' do
+    let(:tag_name) { 'z_tag' }
+
+    it 'should make tag' do
+      actual = subject.tag_for(tag_name)
+      actual.should == ::RightGit::Git::Tag.new(subject, tag_name)
+    end
+  end # tag_for
+
   context '#tags' do
     let(:tag_list) { ['tag_a', 'tag_b', 'tag_c'] }
 
@@ -346,7 +364,7 @@ EOF
         with('git tag', shell_execute_options).
         and_return(tag_list.join("\n") + "\n").
         once
-      actual = subject.tags.should == tag_list
+      actual = subject.tags.map(&:name).should == tag_list
     end
   end # tags
 
@@ -372,35 +390,68 @@ EOF
       end
     end
 
-    let(:expected_commits) do
-      [
-        { :hash => '0123456', :timestamp => 1378318888, :author => 'foo@bar.com' },
-        { :hash => '789abcd', :timestamp => 1378317777, :author => 'baz@bar.com' },
-        { :hash => 'ef01234', :timestamp => 1378316666, :author => 'foo@bar.com' }
-      ]
-    end
-    let(:log_output) do
-      expected_commits.inject([]) do |result, data|
-        result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]}"
-        result
-      end.join("\n") + "\n"
-    end
-
-    [
-      [nil, {}, ['-n1000', '--format="%h %at %aE"']],
-      [
-        'master',
-        {:tail => 3, :no_merges => true},
-        ['-n3', '--format="%h %at %aE"', '--no-merges master']
-      ]
-    ].each do |params|
-      context "params = #{params.inspect[0..31]}..." do
-        let(:revision)    { params[0] }
-        let(:log_options) { params[1] }
-        let(:log_args)    { params[2] }
-        it_should_behave_like 'git log'
+    context 'with abbreviated hashes' do
+      let(:expected_commits) do
+        [
+          { :hash => '0123456', :timestamp => 1378318888, :author => 'foo@bar.com' },
+          { :hash => '789abcd', :timestamp => 1378317777, :author => 'baz@bar.com' },
+          { :hash => 'ef01234', :timestamp => 1378316666, :author => 'foo@bar.com' }
+        ]
       end
-    end
+      let(:log_output) do
+        expected_commits.inject([]) do |result, data|
+          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]}"
+          result
+        end.join("\n") + "\n"
+      end
+
+      [
+        [nil, {}, ['-n1000', '--format="%h %at %aE"']],
+        [
+          'master',
+          { :tail => 3, :no_merges => true },
+          ['-n3', '--format="%h %at %aE"', '--no-merges master']
+        ]
+      ].each do |params|
+        context "params = #{params.inspect[0..31]}..." do
+          let(:revision)    { params[0] }
+          let(:log_options) { params[1] }
+          let(:log_args)    { params[2] }
+          it_should_behave_like 'git log'
+        end
+      end
+    end # with abbreviated hashes
+
+    context 'with full hashes' do
+      let(:expected_commits) do
+        [
+          { :hash => '0123456789abcdef0123456789abcdef01234567', :timestamp => 1378321111, :author => 'foo@bar.com' },
+          { :hash => '89abcdef0123456789abcdef0123456789abcdef', :timestamp => 1378320000, :author => 'baz@bar.com' },
+          { :hash => 'abcdef0123456789abcdef0123456789abcdef01', :timestamp => 1378319999, :author => 'foo@bar.com' }
+        ]
+      end
+      let(:log_output) do
+        expected_commits.inject([]) do |result, data|
+          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]}"
+          result
+        end.join("\n") + "\n"
+      end
+
+      [
+        [
+          'foo',
+          { :tail => 3, :no_merges => true, :full_hashes => true },
+          ['-n3', '--format="%H %at %aE"', '--no-merges foo']
+        ]
+      ].each do |params|
+        context "params = #{params.inspect[0..31]}..." do
+          let(:revision)    { params[0] }
+          let(:log_options) { params[1] }
+          let(:log_args)    { params[2] }
+          it_should_behave_like 'git log'
+        end
+      end
+    end # with full hashes
   end # tags
 
   context '#clean' do
