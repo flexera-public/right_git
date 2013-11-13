@@ -356,7 +356,8 @@ module RightGit::Git
     CLEAR_GIT_ENV_VARS = ['GIT_DIR', 'GIT_INDEX_FILE', 'GIT_WORK_TREE'].freeze
 
     def inner_execute(shell_method, git_args)
-      shell.method(shell_method).call(
+      shell.send(
+        shell_method,
         ['git', git_args].flatten.join(' '),
         :logger => logger,
         :directory => @repo_dir,

@@ -26,14 +26,22 @@ require 'right_git/shell'
 # local
 require 'logger'
 require 'stringio'
+require 'singleton'
 
 module RightGit::Shell
 
-  # Default shell implementation
-  module Default
-    extend ::RightGit::Shell::Interface
+  # Default shell singleton implementation.
+  class Default
+    include ::RightGit::Shell::Interface
+    include ::Singleton
 
-    module_function
+    def self.method_missing(method_sym, *arguments, &block)
+      if instance.respond_to?(method_sym)
+        instance.send(method_sym, *arguments, &block)
+      else
+        super
+      end
+    end
 
     # Implements execute interface.
     def execute(cmd, options = {})
