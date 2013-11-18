@@ -141,11 +141,18 @@ module RightGit::Shell
     # @return [TrueClass] always true
     def set_env_vars(variables)
       save_vars = {}
-      variables.each { |k, v| save_vars[k] = ENV[k]; ENV[k] = v }
+      variables.each do |k, v|
+        k = k.to_s
+        save_vars[k] = ENV[k]
+        ENV[k] = v.nil? ? v : v.to_s
+      end
       begin
         yield
       ensure
-        variables.each_key { |k| ENV[k] = save_vars[k] }
+        variables.each_key do |k|
+          k = k.to_s
+          ENV[k] = save_vars[k]
+        end
       end
       true
     end
@@ -160,11 +167,18 @@ module RightGit::Shell
     # @return [TrueClass] always true
     def clear_env_vars(names, &block)
       save_vars = {}
-      names.each { |k| save_vars[k] = ENV[k]; ENV[k] = nil }
+      names.each do |k|
+        k = k.to_s
+        save_vars[k] = ENV[k]
+        ENV[k] = nil
+      end
       begin
         yield
       ensure
-        names.each { |k| ENV[k] = save_vars[k] }
+        names.each do |k|
+          k = k.to_s
+          ENV[k] = save_vars[k]
+        end
       end
       true
     end
