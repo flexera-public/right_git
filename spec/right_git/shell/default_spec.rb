@@ -44,6 +44,14 @@ describe RightGit::Shell::Default do
 
   subject { ::RightGit::Shell::Default }
 
+  context '#respond_to?' do
+    it 'should behave like an easy singleton' do
+      subject.respond_to?(:foo).should be_false
+      subject.respond_to?(:execute).should be_true
+      subject.respond_to?(:output_for, false).should be_true
+    end
+  end
+
   context '#default_logger' do
     it 'should have a default logger' do
       subject.default_logger.should be_a_kind_of(::Logger)
@@ -143,6 +151,63 @@ describe RightGit::Shell::Default do
         once
       actual_message = subject.output_for(cmd, shell_execute_options)
       actual_message.should == expected_message
+    end
+
+    it 'should set environment variables' do
+      environment = {
+        'RIGHT_GIT_DEFAULT_SPEC_A' => 1,
+        :RIGHT_GIT_DEFAULT_SPEC_B => 'b',
+        'RIGHT_GIT_DEFAULT_SPEC_C' => nil
+      }
+      cmd = is_windows ? 'cmd.exe /C set' : 'sh -c printenv'
+      logger.
+        should_receive(:info).
+        with("+ #{cmd}").
+        and_return(true).
+        once
+      begin
+        ENV['RIGHT_GIT_DEFAULT_SPEC_A'].should be_nil
+        ENV['RIGHT_GIT_DEFAULT_SPEC_B'].should be_nil
+        ENV['RIGHT_GIT_DEFAULT_SPEC_C'].should be_nil
+        ENV['RIGHT_GIT_DEFAULT_SPEC_C'] = 'bad'
+        actual = subject.output_for(cmd, shell_execute_options.merge(:set_env_vars => environment))
+        actual_lines = actual.lines.map { |l| l.strip }.sort
+        ENV['RIGHT_GIT_DEFAULT_SPEC_A'].should be_nil
+        ENV['RIGHT_GIT_DEFAULT_SPEC_B'].should be_nil
+        ENV['RIGHT_GIT_DEFAULT_SPEC_C'].should == 'bad'
+      ensure
+        ENV['RIGHT_GIT_DEFAULT_SPEC_C'] = nil
+      end
+      actual_lines.should include "RIGHT_GIT_DEFAULT_SPEC_A=1"
+      actual_lines.should include "RIGHT_GIT_DEFAULT_SPEC_B=b"
+      actual_lines.should_not include "RIGHT_GIT_DEFAULT_SPEC_C=bad"
+    end
+
+    it 'should clear environment variables' do
+      names = ['RIGHT_GIT_DEFAULT_SPEC_B', :RIGHT_GIT_DEFAULT_SPEC_C]
+      cmd = is_windows ? 'cmd.exe /C set' : 'sh -c printenv'
+      logger.
+        should_receive(:info).
+        with("+ #{cmd}").
+        and_return(true).
+        once
+      begin
+        ENV['RIGHT_GIT_DEFAULT_SPEC_A'] = 'good'
+        ENV['RIGHT_GIT_DEFAULT_SPEC_B'] = 'bad'
+        ENV['RIGHT_GIT_DEFAULT_SPEC_C'] = 'ugly'
+        actual = subject.output_for(cmd, shell_execute_options.merge(:clear_env_vars => names))
+        actual_lines = actual.lines.map { |l| l.strip }.sort
+        ENV['RIGHT_GIT_DEFAULT_SPEC_A'].should == 'good'
+        ENV['RIGHT_GIT_DEFAULT_SPEC_B'].should == 'bad'
+        ENV['RIGHT_GIT_DEFAULT_SPEC_C'].should == 'ugly'
+      ensure
+        ENV['RIGHT_GIT_DEFAULT_SPEC_A'] = nil
+        ENV['RIGHT_GIT_DEFAULT_SPEC_B'] = nil
+        ENV['RIGHT_GIT_DEFAULT_SPEC_C'] = nil
+      end
+      actual_lines.should include "RIGHT_GIT_DEFAULT_SPEC_A=good"
+      actual_lines.should_not include "RIGHT_GIT_DEFAULT_SPEC_B=bad"
+      actual_lines.should_not include "RIGHT_GIT_DEFAULT_SPEC_C=ugly"
     end
   end
 
