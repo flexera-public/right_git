@@ -35,6 +35,10 @@ module RightGit::Shell
     include ::RightGit::Shell::Interface
     include ::Singleton
 
+    def self.respond_to?(*arguments)
+      instance.respond_to?(*arguments) || super
+    end
+
     def self.method_missing(method_sym, *arguments, &block)
       if instance.respond_to?(method_sym)
         instance.send(method_sym, *arguments, &block)

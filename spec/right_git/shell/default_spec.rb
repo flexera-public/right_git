@@ -44,6 +44,14 @@ describe RightGit::Shell::Default do
 
   subject { ::RightGit::Shell::Default }
 
+  context '#respond_to?' do
+    it 'should behave like an easy singleton' do
+      subject.respond_to?(:foo).should be_false
+      subject.respond_to?(:execute).should be_true
+      subject.respond_to?(:output_for, false).should be_true
+    end
+  end
+
   context '#default_logger' do
     it 'should have a default logger' do
       subject.default_logger.should be_a_kind_of(::Logger)
