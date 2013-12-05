@@ -76,7 +76,9 @@ describe RightGit::Shell::Default do
 
     it 'should execute in a specified directory' do
       ::Dir.mktmpdir do |temp_dir|
-        expected_dir = ::File.expand_path(temp_dir)
+        # the mac symlinks /tmp to /private/tmp, which throws off tmpdir expectations unless
+        # you fully resolve it.
+        expected_dir = ::Dir.chdir(temp_dir) { ::File.expand_path(::Dir.pwd) }
         if is_windows
           cmd = "#{command_shell} \"echo %CD%\""
           expected_dir.gsub!('/', "\\")
@@ -84,6 +86,7 @@ describe RightGit::Shell::Default do
           cmd = 'pwd'
         end
         expected_output = expected_dir + (is_windows ? " \n" : "\n")
+
         logger.
           should_receive(:info).
           with("+ #{cmd}").
