@@ -5,6 +5,8 @@
 source 'http://s3.amazonaws.com/rightscale_rightlink_gems_dev'
 source 'https://rubygems.org'
 
+gemspec
+
 # Gems used during RightDevelop development that should be called out in the gemspec
 group :development do
   gem "rake", [">= 0.8.7", "< 0.10"]
@@ -19,5 +21,7 @@ group :test do
   gem "flexmock", "~> 0.8.7", :require => nil
   gem "ruby-debug", ">= 0.10", :platforms => :ruby_18
   gem "ruby-debug19", ">= 0.11.6", :platforms => :ruby_19
-  gem "json", "1.4.6"  # locked for mswin32 friendliness
+  if RUBY_PLATFORM =~ /mswin/
+    gem "json", "1.4.6"  # locked for mswin32 friendliness
+  end
 end
