@@ -5,7 +5,7 @@
 source 'http://s3.amazonaws.com/rightscale_rightlink_gems_dev'
 source 'https://rubygems.org'
 
-gemspec
+# DO NOT add gemspec to this file because it breaks Jeweler's .gemspec generation
 
 # Gems used during RightDevelop development that should be called out in the gemspec
 group :development do

@@ -27,7 +27,13 @@ require 'tmpdir'
 module RightGit::Git
   class RepositorySpec
     GIT_ERROR = GitError
-    TEMP_DIR  = ::File.join(::Dir.tmpdir, 'right_git-repository-3b5e5cd0495e6af9942206efa2626c6e')
+
+    # the mac symlinks /tmp to /private/tmp, which throws off tmpdir expectations unless
+    # you fully resolve it.
+    TEMP_DIR  = ::File.join(
+      ::Dir.chdir(::Dir.tmpdir) { ::File.expand_path(::Dir.pwd) },
+      'right_git-repository-3b5e5cd0495e6af9942206efa2626c6e')
+
     REPO_NAME = 'bar'
     REPO_URL  = "git@github.com:foo/#{REPO_NAME}.git"
     REPO_DIR  = ::File.join(TEMP_DIR, REPO_NAME)
