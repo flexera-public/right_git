@@ -29,7 +29,7 @@ module RightGit::Git
   # like a string, whose value is the name of the branch. This allows branches
   # to be sorted, matched against Regexp, and certain other string-y operations.
   class Branch
-    BRANCH_NAME     = '[#A-Za-z0-9._\/-]+'
+    BRANCH_NAME     = '[#A-Za-z0-9._\/+-]+'
     BRANCH_INFO     = /^(\* |  )?(#{BRANCH_NAME})( -> #{BRANCH_NAME})?$/
     BRANCH_FULLNAME = /(remotes\/)?(#{BRANCH_NAME})/
 
