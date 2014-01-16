@@ -27,11 +27,11 @@ module RightGit::Git
 
   # A commit within a Git repository.
   class Commit
-    COMMIT_INFO = /^([0-9A-Fa-f]+) ([0-9]+) (.*)$/
-
+    include ::RightGit::Git::BelongsToRepository
+    LOG_FORMAT_LONG   = "%H %at %aE %s"
+    LOG_FORMAT        = "%h %at %aE %s"
+    COMMIT_INFO       = /^([0-9A-Fa-f]+) ([0-9]+) (\S+) (.*)$/
     COMMIT_SHA1_REGEX = /^[0-9a-fA-F]{40}$/
-
-    attr_reader :repo
 
     class CommitError < GitError; end
 
@@ -42,18 +42,23 @@ module RightGit::Git
       unless match = COMMIT_INFO.match(line)
         raise CommitError, "Unrecognized commit summary: #{line.inspect}"
       end
-      @info = [ match[1], Integer(match[2]), match[3] ]
+      @info = [ match[1], Integer(match[2]), match[3], match[4] ]
     end
 
-    # @return [String] stringized
+    # Provide a String representation of this commit (specifically, its commit hash).
     def to_s
-      "#{self.class.name}: #{@info.inspect}"
+      hash
     end
-    alias inspect to_s
 
+    # Provide a programmer-friendly representation of this branch.
+    def inspect
+      '#<%s:%s>' % [self.class.name, hash]
+    end
+
+    # The commit hash. This overrides String#hash on purpose
+    #
     # @return [String] hash of commit (may be abbreviated)
     def hash
-      # This overrides String#hash on purpose
       @info[0]
     end
 
@@ -66,6 +71,13 @@ module RightGit::Git
     def author
       @info[2]
     end
+
+    # @return [String]
+    def subject
+      @info[3]
+    end
+
+    alias comment subject
 
     # @return [TrueClass|FalseClass] true if the given revision is a (fully qualified, not abbreviated) commit SHA
     def self.sha?(revision)

@@ -31,6 +31,7 @@ describe RightGit::Git::Commit do
   let(:commit_hash)      { '0123456' }
   let(:commit_timestamp) { ::Time.now.to_i }
   let(:commit_author)    { 'foo@bar.com' }
+  let(:commit_comment)   { 'i like bees' }
 
   subject { described_class.new(repo, commit_line) }
 
@@ -39,14 +40,15 @@ describe RightGit::Git::Commit do
       subject.hash.should == commit_hash
       subject.timestamp.should == ::Time.at(commit_timestamp)
       subject.author.should == commit_author
+      subject.comment.should == commit_comment
       subject.repo.should == repo
-      subject.inspect.should == "#{described_class.name}: #{[commit_hash, commit_timestamp, commit_author].inspect}"
-      subject.to_s.should == subject.inspect
+      subject.inspect.should == "#<#{described_class.name}:#{commit_hash}>"
+      subject.to_s.should == commit_hash
     end
   end
 
   context 'when line is valid' do
-    let(:commit_line) { "#{commit_hash} #{commit_timestamp} #{commit_author}" }
+    let(:commit_line) { "#{commit_hash} #{commit_timestamp} #{commit_author} #{commit_comment}" }
     it_should_behave_like 'all commits'
   end
 

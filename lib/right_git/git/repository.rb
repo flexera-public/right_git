@@ -23,6 +23,9 @@
 # ancestor
 require 'right_git/git'
 
+# dependencies
+require 'right_support'
+
 module RightGit::Git
 
   # Provides an API for managing a git repository that is suitable for
@@ -31,28 +34,32 @@ module RightGit::Git
   # not covered here. What is provided are APIs for cloning, fetching, listing
   # and grooming git-related objects.
   class Repository
+    include RightSupport::Log::Mixin
+
     COMMIT_SHA1_REGEX = /^commit ([0-9a-fA-F]{40})$/
 
     SUBMODULE_STATUS_REGEX = /^([+\- ])([0-9a-fA-F]{40}) (.*) (.*)$/
 
-    attr_reader :repo_dir, :logger, :shell
+    attr_reader :repo_dir, :shell
 
     # @param [String] repo_dir for git actions or '.'
     # @param [Hash] options for repository
     # @option options [Object] :shell for git command execution (default = DefaultShell)
-    # @option options [Logger] :logger for logging (default = STDOUT)
+    # @option options [Logger] :logger custom logger to use; (default = class-level logger provided by Log::Mixin)
     def initialize(repo_dir, options = {})
       options = {
         :shell  => nil,
         :logger => nil
       }.merge(options)
+
       if repo_dir && ::File.directory?(repo_dir)
         @repo_dir = ::File.expand_path(repo_dir)
       else
         raise ::ArgumentError.new('A valid repo_dir is required')
       end
+
       @shell = options[:shell] || ::RightGit::Shell::Default
-      @logger = options[:logger] || ::RightGit::Shell::Default.default_logger
+      self.logger = options[:logger] || self.class.logger
     end
 
     # Factory method to clone the repo given by URL to the given destination and
@@ -110,12 +117,19 @@ module RightGit::Git
       true
     end
 
-    # Factory method for a branch object referencing this repository.
+    # @deprecated alias for #branch
+    def branch_for(branch_name)
+      warn "#{self.class.name}#branch_for is deprecated; please use #{self.class.name}#branch instead"
+      branch(branch_name)
+    end
+
+    # Factory method for a branch object referencing this repository. The branch may be
+    # hypothetical (e.g. does not exist yet).
     #
     # @param [String] branch_name for reference
     #
     # @return [Branch] new branch
-    def branch_for(branch_name)
+    def branch(branch_name)
       Branch.new(self, branch_name)
     end
 
@@ -123,25 +137,17 @@ module RightGit::Git
     # directory.
     #
     # @param [Hash] options for branches
-    # @option options [TrueClass|FalseClass] :all is true to include remote branches (default), else local only
+    # @option options [Boolean] :all true to include remote branches, else local only (default)
     #
     # @return [Array] list of branches
     def branches(options = {})
-      options = {
-        :all => true
-      }.merge(options)
-      git_args = ['branch']
-      git_args << '-a' if options[:all]  # note older versions of git don't accept --all
       branches = BranchCollection.new(self)
-      git_output(git_args).lines.each do |line|
-        # ignore the no-branch branch that git helpfully provides when current
-        # HEAD is a tag or otherwise not-a-branch.
-        unless line.strip == '* (no branch)'
-          branch = Branch.new(self, line)
-          branches << branch if branch
-        end
+
+      if options[:all]
+        branches
+      else
+        branches.local
       end
-      branches
     end
 
     # Factory method for a tag object referencing this repository.
@@ -166,6 +172,7 @@ module RightGit::Git
     # @param [Hash] options for log
     # @option options [Integer] :skip as lines of most recent history to skip (Default = include most recent)
     # @option options [Integer] :tail as max history of log
+    # @option options [TrueClass|FalseClass] :merges as true to exclude non-merge commits
     # @option options [TrueClass|FalseClass] :no_merges as true to exclude merge commits
     # @option options [TrueClass|FalseClass] :full_hashes as true show full hashes, false for (7-character) abbreviations
     #
@@ -173,7 +180,8 @@ module RightGit::Git
     def log(revision, options = {})
       options = {
         :skip        => nil,
-        :tail        => 1_000,
+        :tail        => 10_000,
+        :merges      => false,
         :no_merges   => false,
         :full_hashes => false,
       }.merge(options)
@@ -181,12 +189,13 @@ module RightGit::Git
       git_args = [
         'log',
         "-n#{options[:tail]}",
-        "--format=\"%#{options[:full_hashes] ? 'H' : 'h'} %at %aE\""  # double-quotes are Windows friendly
+        "--format=\"#{options[:full_hashes] ? Commit::LOG_FORMAT_LONG : Commit::LOG_FORMAT}\""  # double-quotes are Windows friendly
       ]
       git_args << "--skip #{skip}" if skip
+      git_args << "--merges" if options[:merges]
       git_args << "--no-merges" if options[:no_merges]
       git_args << revision if revision
-      git_output(git_args).lines.map { |line| Commit.new(self, line) }
+      git_output(git_args).lines.map { |line| Commit.new(self, line.strip) }
     end
 
     # Cleans the current repository of untracked files.
@@ -359,9 +368,9 @@ module RightGit::Git
       shell.send(
         shell_method,
         ['git', git_args].flatten.join(' '),
-        :logger => logger,
         :directory => @repo_dir,
-        :clear_env_vars => CLEAR_GIT_ENV_VARS)
+        :clear_env_vars => CLEAR_GIT_ENV_VARS,
+        :logger => logger)
     end
 
   end # Repository

@@ -22,13 +22,11 @@
 
 require File.expand_path('../../../spec_helper', __FILE__)
 
-require 'logger'
 require 'stringio'
 require 'tmpdir'
 
 describe RightGit::Shell::Default do
 
-  let(:logger)        { flexmock('logger') }
   let(:is_windows)    { !!(RUBY_PLATFORM =~ /mswin|win32|dos|mingw|cygwin/) }
   let(:command_shell) { is_windows ? 'cmd.exe /C' : 'sh -c' }
   let(:outstream)     { flexmock('outstream') }
@@ -39,33 +37,14 @@ describe RightGit::Shell::Default do
   end
 
   let(:shell_execute_options) do
-    { :logger => logger, :outstream => outstream }
+    { :outstream => outstream }
   end
 
   subject { ::RightGit::Shell::Default }
 
-  context '#respond_to?' do
-    it 'should behave like an easy singleton' do
-      subject.respond_to?(:foo).should be_false
-      subject.respond_to?(:execute).should be_true
-      subject.respond_to?(:output_for, false).should be_true
-    end
-  end
-
-  context '#default_logger' do
-    it 'should have a default logger' do
-      subject.default_logger.should be_a_kind_of(::Logger)
-    end
-  end
-
   context '#execute' do
     it 'should execute' do
       cmd = "#{command_shell} \"echo #{message}\""
-      logger.
-        should_receive(:info).
-        with("+ #{cmd}").
-        and_return(true).
-        once
       outstream.
         should_receive(:<<).
         with(expected_message).
@@ -87,11 +66,6 @@ describe RightGit::Shell::Default do
         end
         expected_output = expected_dir + (is_windows ? " \n" : "\n")
 
-        logger.
-          should_receive(:info).
-          with("+ #{cmd}").
-          and_return(true).
-          once
         outstream.
           should_receive(:<<).
           with(expected_output).
@@ -105,11 +79,6 @@ describe RightGit::Shell::Default do
 
     it 'should raise on failure by default' do
       cmd = "#{command_shell} \"exit 99\""
-      logger.
-        should_receive(:info).
-        with("+ #{cmd}").
-        and_return(true).
-        once
       expect { subject.execute(cmd, shell_execute_options) }.
         to raise_error(
           ::RightGit::Shell::ShellError,
@@ -118,11 +87,6 @@ describe RightGit::Shell::Default do
 
     it 'should not raise on failure by request' do
       cmd = "#{command_shell} \"exit 99\""
-      logger.
-        should_receive(:info).
-        with("+ #{cmd}").
-        and_return(true).
-        once
       actual = subject.execute(
         cmd, shell_execute_options.merge(:raise_on_failure => false))
       actual.should == 99
@@ -130,28 +94,24 @@ describe RightGit::Shell::Default do
 
     it 'should execute info logging when outstream is nil' do
       cmd = "#{command_shell} \"echo #{message}\""
-      logger.
-        should_receive(:info).
-        with("+ #{cmd}").
-        and_return(true).
-        once
-      logger.
-        should_receive(:info).
-        with(expected_message.strip).
-        and_return(true).
-        once
       subject.execute(cmd, shell_execute_options.merge(:outstream => nil)).should == 0
+    end
+
+    it 'has the right to a logger' do
+      logger = flexmock('expensive criminal defense logger')
+      logger.should_receive(:info)
+      cmd = "#{command_shell} \"echo #{message}\""
+      subject.execute(cmd, shell_execute_options.merge(:outstream => nil, :logger => logger)).should == 0
+    end
+
+    it 'will be provided with a logger if it cannot afford one' do
+
     end
   end # execute
 
   context '#output_for' do
     it 'should execute and return output' do
       cmd = "#{command_shell} \"echo #{message}\""
-      logger.
-        should_receive(:info).
-        with("+ #{cmd}").
-        and_return(true).
-        once
       actual_message = subject.output_for(cmd, shell_execute_options)
       actual_message.should == expected_message
     end
@@ -163,11 +123,6 @@ describe RightGit::Shell::Default do
         'RIGHT_GIT_DEFAULT_SPEC_C' => nil
       }
       cmd = is_windows ? 'cmd.exe /C set' : 'sh -c printenv'
-      logger.
-        should_receive(:info).
-        with("+ #{cmd}").
-        and_return(true).
-        once
       begin
         ENV['RIGHT_GIT_DEFAULT_SPEC_A'].should be_nil
         ENV['RIGHT_GIT_DEFAULT_SPEC_B'].should be_nil
@@ -189,11 +144,6 @@ describe RightGit::Shell::Default do
     it 'should clear environment variables' do
       names = ['RIGHT_GIT_DEFAULT_SPEC_B', :RIGHT_GIT_DEFAULT_SPEC_C]
       cmd = is_windows ? 'cmd.exe /C set' : 'sh -c printenv'
-      logger.
-        should_receive(:info).
-        with("+ #{cmd}").
-        and_return(true).
-        once
       begin
         ENV['RIGHT_GIT_DEFAULT_SPEC_A'] = 'good'
         ENV['RIGHT_GIT_DEFAULT_SPEC_B'] = 'bad'

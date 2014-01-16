@@ -43,7 +43,6 @@ end
 describe RightGit::Git::Repository do
   let(:error_class)  { ::RightGit::Git::RepositorySpec::GIT_ERROR }
   let(:shell)        { flexmock('shell') }
-  let(:logger)       { flexmock('logger') }
   let(:repo_url)     { ::RightGit::Git::RepositorySpec::REPO_URL }
   let(:repo_name)    { ::RightGit::Git::RepositorySpec::REPO_NAME }
   let(:repo_dir)     { ::RightGit::Git::RepositorySpec::REPO_DIR }
@@ -63,13 +62,13 @@ fatal: I appear to succeed by exiting zero while printing errors to STDERR.
 EOF
   end
 
-  let(:repo_options) { { :logger => logger, :shell => shell } }
+  let(:repo_options) { { :shell => shell } }
 
   let(:shell_execute_options) do
     {
       :clear_env_vars => ['GIT_DIR', 'GIT_INDEX_FILE', 'GIT_WORK_TREE'],
-      :logger => logger,
-      :directory => repo_dir
+      :directory => repo_dir,
+      :logger => RightGit::Git::Repository.logger
     }
   end
 
@@ -93,6 +92,26 @@ EOF
     (::FileUtils.rm_rf(temp_dir) rescue nil) if ::File.directory?(temp_dir)
   end
 
+  context '#initialize' do
+    context 'given a :logger option' do
+      let(:custom_logger) { flexmock('awesome logger') }
+      let(:repo_options) { {:shell => shell, :logger => custom_logger} }
+
+      it 'sets the instance-level Log::Mixin logger' do
+        subject.logger.should be_a RightSupport::Log::ExceptionLogger
+        subject.logger.actual_logger.should == custom_logger
+      end
+    end
+
+    context 'given no :logger option' do
+      let(:repo_options) { {:shell => shell} }
+
+      it 'inherits the class-level Log::Mixin logger' do
+        subject.logger.should == subject.class.logger
+      end
+    end
+  end
+
   context '#clone_to' do
     shared_examples_for 'git clone' do
       it 'should clone' do
@@ -107,15 +126,9 @@ EOF
               happy_output
             end.
             once
-          logger.
-            should_receive(:info).
-            with(happy_output.strip).
-            and_return(true).
-            once
           repo = described_class.clone_to(repo_url, directory, repo_options)
           repo.should be_a_kind_of(described_class)
           repo.repo_dir.should == repo_dir
-          repo.logger.should == logger
           repo.shell.should == shell
         end
       end
@@ -128,11 +141,6 @@ EOF
               "git clone -- #{repo_url} #{repo_dir}",
               shell_execute_options.merge(:directory => base_dir)).
             and_return(sad_output).
-            once
-          logger.
-            should_receive(:info).
-            with(sad_output.strip).
-            and_return(true).
             once
           expect {
             described_class.clone_to(repo_url, directory, repo_options)
@@ -170,11 +178,6 @@ EOF
             shell_execute_options).
           and_return(happy_output).
           once
-        logger.
-          should_receive(:info).
-          with(happy_output.strip).
-          and_return(true).
-          once
         subject.fetch(*fetch_args).should be_true
       end
 
@@ -185,11 +188,6 @@ EOF
             (['git', 'fetch'] + fetch_args).join(' '),
             shell_execute_options).
           and_return(sad_output).
-          once
-        logger.
-          should_receive(:info).
-          with(sad_output.strip).
-          and_return(true).
           once
         expect { subject.fetch(*fetch_args) }.
           to raise_error(error_class, vet_error)
@@ -222,11 +220,6 @@ EOF
           with('git fetch --tags', shell_execute_options).
           and_return(happy_output).
           once
-        logger.
-          should_receive(:info).
-          with(happy_output.strip).
-          and_return(true).
-          twice
         subject.fetch_all(fetch_all_options).should be_true
       end
 
@@ -237,11 +230,6 @@ EOF
             (['git', 'fetch', '--all'] + git_fetch_all_args).join(' '),
             shell_execute_options).
           and_return(sad_output).
-          once
-        logger.
-          should_receive(:info).
-          with(sad_output.strip).
-          and_return(true).
           once
         expect { subject.fetch_all(fetch_all_options) }.
           to raise_error(error_class, vet_error)
@@ -260,11 +248,11 @@ EOF
     end
   end # fetch_all
 
-  context '#branch_for' do
+  context '#branch' do
     let(:branch_name) { 'z_branch' }
 
-    it 'should make branch' do
-      actual = subject.branch_for(branch_name)
+    it 'should make a branch object' do
+      actual = subject.branch(branch_name)
       actual.should == ::RightGit::Git::Branch.new(subject, branch_name)
     end
   end # branch_for
@@ -275,7 +263,7 @@ EOF
         shell.
           should_receive(:output_for).
           with(
-            (['git', 'branch'] + git_branch_args).join(' '),
+            'git branch -a',
             shell_execute_options).
           and_return(git_branch_output).
           once
@@ -292,24 +280,23 @@ EOF
         shell.
           should_receive(:output_for).
           with(
-            (['git', 'branch'] + git_branch_args).join(' '),
+            'git branch -a',
             shell_execute_options).
           and_return(sad_output).
           once
         expect { subject.branches(branches_options) }.
-          to raise_error(
-            ::RightGit::Git::Branch::BranchError,
-            "Unrecognized branch info: #{sad_output.lines.first.inspect}")
+          to raise_error(::RightGit::Git::Branch::BranchError)
       end
     end
 
     [
       [
         { :all => false },
-        [],
-        { 'master' => nil, 'v1.0' => nil, 'v2.0' => nil }],
+        ['-a'],
+        { 'master' => nil, 'v1.0' => nil, 'v2.0' => nil }
+      ],
       [
-        {},
+        { :all => true },
         ['-a'],
         {
           'master'      => nil,
@@ -320,9 +307,8 @@ EOF
         }
       ]
     ].each do |params|
-      context "params = #{params.inspect[0..31]}..." do
+      context "with params = #{params.inspect[0..31]}..." do
         let(:branches_options)  { params[0] }
-        let(:git_branch_args)   { params[1] }
         let(:expected_branches) { params[2].keys }
         let(:git_branch_output) do
           params[2].inject([]) do |result, (k, v)|
@@ -341,7 +327,6 @@ EOF
 
     context 'when pointing to no branch' do
       let(:branches_options)  { { :all => false } }
-      let(:git_branch_args)   { [] }
       let(:expected_branches) { [] }
       let(:git_branch_output) do
 <<EOF
@@ -389,7 +374,8 @@ EOF
           {
             :hash      => commit.hash,
             :timestamp => commit.timestamp.to_i,
-            :author    => commit.author
+            :author    => commit.author,
+            :comment   => commit.comment
           }
         end
         actual_commits.should == expected_commits
@@ -399,24 +385,24 @@ EOF
     context 'with abbreviated hashes' do
       let(:expected_commits) do
         [
-          { :hash => '0123456', :timestamp => 1378318888, :author => 'foo@bar.com' },
-          { :hash => '789abcd', :timestamp => 1378317777, :author => 'baz@bar.com' },
-          { :hash => 'ef01234', :timestamp => 1378316666, :author => 'foo@bar.com' }
+          { :hash => '0123456', :timestamp => 1378318888, :author => 'foo@bar.com', :comment => 'i like bees' },
+          { :hash => '789abcd', :timestamp => 1378317777, :author => 'baz@bar.com', :comment => 'i like monkeys' },
+          { :hash => 'ef01234', :timestamp => 1378316666, :author => 'foo@bar.com', :comment => 'i like cereal' }
         ]
       end
       let(:log_output) do
         expected_commits.inject([]) do |result, data|
-          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]}"
+          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]} #{data[:comment]}"
           result
         end.join("\n") + "\n"
       end
 
       [
-        [nil, {}, ['-n1000', '--format="%h %at %aE"']],
+        [nil, {}, ['-n10000', '--format="%h %at %aE %s"']],
         [
           'master',
           { :tail => 3, :no_merges => true },
-          ['-n3', '--format="%h %at %aE"', '--no-merges master']
+          ['-n3', '--format="%h %at %aE %s"', '--no-merges master']
         ]
       ].each do |params|
         context "params = #{params.inspect[0..31]}..." do
@@ -431,14 +417,14 @@ EOF
     context 'with full hashes' do
       let(:expected_commits) do
         [
-          { :hash => '0123456789abcdef0123456789abcdef01234567', :timestamp => 1378321111, :author => 'foo@bar.com' },
-          { :hash => '89abcdef0123456789abcdef0123456789abcdef', :timestamp => 1378320000, :author => 'baz@bar.com' },
-          { :hash => 'abcdef0123456789abcdef0123456789abcdef01', :timestamp => 1378319999, :author => 'foo@bar.com' }
+          { :hash => '0123456789abcdef0123456789abcdef01234567', :timestamp => 1378321111, :author => 'foo@bar.com', :comment => 'i like bees' },
+          { :hash => '89abcdef0123456789abcdef0123456789abcdef', :timestamp => 1378320000, :author => 'baz@bar.com', :comment => 'i like monkeys' },
+          { :hash => 'abcdef0123456789abcdef0123456789abcdef01', :timestamp => 1378319999, :author => 'foo@bar.com', :comment => 'i like cereal' }
         ]
       end
       let(:log_output) do
         expected_commits.inject([]) do |result, data|
-          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]}"
+          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]} #{data[:comment]}"
           result
         end.join("\n") + "\n"
       end
@@ -447,12 +433,12 @@ EOF
         [
           'foo',
           { :tail => 3, :no_merges => true, :full_hashes => true },
-          ['-n3', '--format="%H %at %aE"', '--no-merges foo']
+          ['-n3', '--format="%H %at %aE %s"', '--no-merges foo']
         ],
         [
           nil,
           { :tail => 7, :skip => 4, :full_hashes => true },
-          ['-n7', '--format="%H %at %aE"', '--skip 4']
+          ['-n7', '--format="%H %at %aE %s"', '--skip 4']
         ]
       ].each do |params|
         context "params = #{params.inspect[0..31]}..." do
@@ -526,11 +512,6 @@ EOF
             shell_execute_options).
           and_return(happy_output).
           once
-        logger.
-          should_receive(:info).
-          with(happy_output.strip).
-          and_return(true).
-          once
         subject.checkout_to(revision, checkout_options).should be_true
       end
 
@@ -541,11 +522,6 @@ EOF
             (['git', 'checkout'] + checkout_args).join(' '),
             shell_execute_options).
           and_return(sad_output).
-          once
-        logger.
-          should_receive(:info).
-          with(sad_output.strip).
-          and_return(true).
           once
         expect { subject.checkout_to(revision, checkout_options) }.
           to raise_error(error_class, vet_error)
@@ -575,11 +551,6 @@ EOF
             shell_execute_options).
           and_return(happy_output).
           once
-        logger.
-          should_receive(:info).
-          with(happy_output.strip).
-          and_return(true).
-          once
         subject.hard_reset_to(revision).should be_true
       end
 
@@ -590,11 +561,6 @@ EOF
             (['git', 'reset', '--hard'] + reset_args).join(' '),
             shell_execute_options).
           and_return(sad_output).
-          once
-        logger.
-          should_receive(:info).
-          with(sad_output.strip).
-          and_return(true).
           once
         expect { subject.hard_reset_to(revision) }.
           to raise_error(error_class, vet_error)
@@ -727,6 +693,28 @@ EOF
         it_should_behave_like 'git show'
       end
     end
-  end # update_submodules
+  end # sha_for
 
+  context '#inner_execute' do
+    context 'given a custom logger' do
+      let(:custom_logger) { flexmock('awesome logger') }
+      let(:repo_options) { {:shell => shell, :logger => custom_logger} }
+
+      it 'passes the custom logger to the shell' do
+        assert_logger = FlexMock.on { |hsh| hsh.key?(:logger) }
+        shell.should_receive(:bananas).with("git --ripe", assert_logger)
+        subject.instance_eval { inner_execute(:bananas, ['--ripe']) }
+      end
+    end
+
+    context 'given no logger' do
+      let(:repo_options) { {:shell => shell} }
+
+      it 'passes the class-level logger to the shell' do
+        assert_no_logger = FlexMock.on { |hsh| hsh[:logger] = described_class.logger }
+        shell.should_receive(:bananas).with("git --ripe", assert_no_logger)
+        subject.instance_eval { inner_execute(:bananas, ['--ripe']) }
+      end
+    end
+  end #inner_execute
 end # RightGit::Repository

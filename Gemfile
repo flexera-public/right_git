@@ -7,7 +7,10 @@ source 'https://rubygems.org'
 
 # DO NOT add gemspec to this file because it breaks Jeweler's .gemspec generation
 
-# Gems used during RightDevelop development that should be called out in the gemspec
+# Runtime dependencies of RightGit
+gem "right_support", [">= 2.8.10", "< 3.0.0"]
+
+# Gems used during RightGit development that should be called out in the gemspec
 group :development do
   gem "rake", [">= 0.8.7", "< 0.10"]
   gem 'jeweler', '~> 1.8.3'

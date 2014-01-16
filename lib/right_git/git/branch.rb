@@ -29,8 +29,16 @@ module RightGit::Git
   # like a string, whose value is the name of the branch. This allows branches
   # to be sorted, matched against Regexp, and certain other string-y operations.
   class Branch
+    include ::RightGit::Git::BelongsToRepository
+
+    # Regexp fragment that matches a valid Git branch name consisting of alphanumerics
+    # plus the punctuation characters "#", "." "_", "/" and "-".
     BRANCH_NAME     = '[#A-Za-z0-9._\/+-]+'
+
+    # Regexp that matches a line of Git output containing information about a branch.
     BRANCH_INFO     = /^(\* |  )?(#{BRANCH_NAME})( -> #{BRANCH_NAME})?$/
+
+    # Regexp that matches a valid Git branch name, possibly prepended by "remotes/"
     BRANCH_FULLNAME = /(remotes\/)?(#{BRANCH_NAME})/
 
     DEFAULT_DISPLAY_WIDTH = 40
@@ -39,7 +47,7 @@ module RightGit::Git
 
     class BranchError < GitError; end
 
-    attr_reader :repo, :fullname
+    attr_reader :fullname
 
     # @param [Repository] repo hosting branch
     # @param [String] line of git output describing branch
@@ -52,18 +60,22 @@ module RightGit::Git
           @remote = !!(match[1] || fullname.index('/'))
           @repo = repo
         else
-          raise BranchError, 'Unreachable due to already matching name pattern'
+          raise BranchError, "Internal error; matched info but not fullname of #{line.inspect}"
         end
       else
-        raise BranchError, "Unrecognized branch info: #{line.inspect}"
+        raise BranchError, "Malformed branch name #{line.inspect}"
       end
     end
 
-    # @return [String] stringized
+    # Provide a String representation of this branch (specifically, its fullname).
     def to_s
-      "#{self.class.name}: #{@fullname.inspect}"
+      fullname.to_s
     end
-    alias inspect to_s
+
+    # Provide a programmer-friendly representation of this branch.
+    def inspect
+      '#<%s:%s>' % [self.class.name, fullname.inspect]
+    end
 
     # @param [Regexp] regexp
     # @return [Integer] match offset
@@ -96,7 +108,7 @@ module RightGit::Git
       @remote
     end
 
-    # @return [String] name of branch sans origin (if any)
+    # @return [String] name of branch sans name of remote (if any)
     def name
       if remote?
         #remove the initial remote-name in the branch (origin/master --> master)
@@ -126,9 +138,9 @@ module RightGit::Git
     # @return [TrueClass] always true
     def delete
       if self.remote?
-        @repo.vet_output("push origin :#{self.name}")
+        repo.vet_output("push origin :#{self.name}")
       else
-        @repo.vet_output("branch -D #{@fullname}")
+        repo.vet_output("branch -D #{@fullname}")
       end
       true
     end
