@@ -64,7 +64,7 @@ module RightGit::Git
           if line == NO_BRANCH
             #no-op; ignore this one
           else
-            @branches << Branch.new(self, line)
+            @branches << Branch.new(@repo, line)
           end
         end
       end

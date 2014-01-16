@@ -3,7 +3,7 @@ module RightGit::Git
     attr_reader :repo
 
     def logger
-      @repo.logger
+      repo.logger
     end
   end
 end
