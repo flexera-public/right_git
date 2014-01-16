@@ -33,7 +33,7 @@ module RightGit::Git
 
     # Regexp fragment that matches a valid Git branch name consisting of alphanumerics
     # plus the punctuation characters "#", "." "_", "/" and "-".
-    BRANCH_NAME     = '[#A-Za-z0-9._\/-]+'
+    BRANCH_NAME     = '[#A-Za-z0-9._\/+-]+'
 
     # Regexp that matches a line of Git output containing information about a branch.
     BRANCH_INFO     = /^(\* |  )?(#{BRANCH_NAME})( -> #{BRANCH_NAME})?$/
