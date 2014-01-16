@@ -42,14 +42,6 @@ describe RightGit::Shell::Default do
 
   subject { ::RightGit::Shell::Default }
 
-  context '#respond_to?' do
-    it 'should behave like an easy singleton' do
-      subject.respond_to?(:foo).should be_false
-      subject.respond_to?(:execute).should be_true
-      subject.respond_to?(:output_for, false).should be_true
-    end
-  end
-
   context '#execute' do
     it 'should execute' do
       cmd = "#{command_shell} \"echo #{message}\""
@@ -103,6 +95,17 @@ describe RightGit::Shell::Default do
     it 'should execute info logging when outstream is nil' do
       cmd = "#{command_shell} \"echo #{message}\""
       subject.execute(cmd, shell_execute_options.merge(:outstream => nil)).should == 0
+    end
+
+    it 'has the right to a logger' do
+      logger = flexmock('expensive criminal defense logger')
+      logger.should_receive(:info)
+      cmd = "#{command_shell} \"echo #{message}\""
+      subject.execute(cmd, shell_execute_options.merge(:outstream => nil, :logger => logger)).should == 0
+    end
+
+    it 'will be provided with a logger if it cannot afford one' do
+
     end
   end # execute
 

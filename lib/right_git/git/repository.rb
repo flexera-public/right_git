@@ -45,9 +45,11 @@ module RightGit::Git
     # @param [String] repo_dir for git actions or '.'
     # @param [Hash] options for repository
     # @option options [Object] :shell for git command execution (default = DefaultShell)
+    # @option options [Logger] :logger custom logger to use; (default = class-level logger provided by Log::Mixin)
     def initialize(repo_dir, options = {})
       options = {
         :shell  => nil,
+        :logger => nil
       }.merge(options)
 
       if repo_dir && ::File.directory?(repo_dir)
@@ -57,6 +59,7 @@ module RightGit::Git
       end
 
       @shell = options[:shell] || ::RightGit::Shell::Default
+      self.logger = options[:logger] || self.class.logger
     end
 
     # Factory method to clone the repo given by URL to the given destination and
@@ -366,7 +369,8 @@ module RightGit::Git
         shell_method,
         ['git', git_args].flatten.join(' '),
         :directory => @repo_dir,
-        :clear_env_vars => CLEAR_GIT_ENV_VARS)
+        :clear_env_vars => CLEAR_GIT_ENV_VARS,
+        :logger => logger)
     end
 
   end # Repository

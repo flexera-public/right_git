@@ -32,22 +32,10 @@ module RightGit::Shell
   # Default shell singleton implementation.
   class Default
     include ::RightGit::Shell::Interface
-    include ::Singleton
-
-    def self.respond_to?(*arguments)
-      instance.respond_to?(*arguments) || super
-    end
-
-    def self.method_missing(method_sym, *arguments, &block)
-      if instance.respond_to?(method_sym)
-        instance.send(method_sym, *arguments, &block)
-      else
-        super
-      end
-    end
+    include ::RightSupport::Ruby::EasySingleton
 
     # Delegates to the RightGit class logger.
-    def logger
+    def default_logger
       ::RightGit::Git::Repository.logger
     end
 
@@ -59,8 +47,11 @@ module RightGit::Shell
         :raise_on_failure => true,
         :set_env_vars     => nil,
         :clear_env_vars   => nil,
+        :logger => default_logger
       }.merge(options)
       outstream = options[:outstream]
+
+      logger = options[:logger]
 
       # build execution block.
       exitstatus = nil

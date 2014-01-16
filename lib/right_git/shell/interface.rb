@@ -28,12 +28,12 @@ module RightGit::Shell
   # Interface for a shell intended to work with RightGit.
   module Interface
 
-    # Return a logger object.
+    # Return a logger object to be used for logging if nothing else is passed in as an option.
     #
     # Must be overridden.
     #
     # @return [Logger]
-    def logger
+    def default_logger
       raise NotImplementedError
     end
 

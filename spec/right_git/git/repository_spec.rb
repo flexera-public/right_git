@@ -67,7 +67,8 @@ EOF
   let(:shell_execute_options) do
     {
       :clear_env_vars => ['GIT_DIR', 'GIT_INDEX_FILE', 'GIT_WORK_TREE'],
-      :directory => repo_dir
+      :directory => repo_dir,
+      :logger => RightGit::Git::Repository.logger
     }
   end
 
@@ -89,6 +90,26 @@ EOF
 
   after(:all) do
     (::FileUtils.rm_rf(temp_dir) rescue nil) if ::File.directory?(temp_dir)
+  end
+
+  context '#initialize' do
+    context 'given a :logger option' do
+      let(:custom_logger) { flexmock('awesome logger') }
+      let(:repo_options) { {:shell => shell, :logger => custom_logger} }
+
+      it 'sets the instance-level Log::Mixin logger' do
+        subject.logger.should be_a RightSupport::Log::ExceptionLogger
+        subject.logger.actual_logger.should == custom_logger
+      end
+    end
+
+    context 'given no :logger option' do
+      let(:repo_options) { {:shell => shell} }
+
+      it 'inherits the class-level Log::Mixin logger' do
+        subject.logger.should == subject.class.logger
+      end
+    end
   end
 
   context '#clone_to' do
@@ -672,6 +693,28 @@ EOF
         it_should_behave_like 'git show'
       end
     end
-  end # update_submodules
+  end # sha_for
 
+  context '#inner_execute' do
+    context 'given a custom logger' do
+      let(:custom_logger) { flexmock('awesome logger') }
+      let(:repo_options) { {:shell => shell, :logger => custom_logger} }
+
+      it 'passes the custom logger to the shell' do
+        assert_logger = FlexMock.on { |hsh| hsh.key?(:logger) }
+        shell.should_receive(:bananas).with("git --ripe", assert_logger)
+        subject.instance_eval { inner_execute(:bananas, ['--ripe']) }
+      end
+    end
+
+    context 'given no logger' do
+      let(:repo_options) { {:shell => shell} }
+
+      it 'passes the class-level logger to the shell' do
+        assert_no_logger = FlexMock.on { |hsh| hsh[:logger] = described_class.logger }
+        shell.should_receive(:bananas).with("git --ripe", assert_no_logger)
+        subject.instance_eval { inner_execute(:bananas, ['--ripe']) }
+      end
+    end
+  end #inner_execute
 end # RightGit::Repository
