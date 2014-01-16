@@ -40,8 +40,8 @@ describe RightGit::Git::Commit do
       subject.timestamp.should == ::Time.at(commit_timestamp)
       subject.author.should == commit_author
       subject.repo.should == repo
-      subject.inspect.should == "#{described_class.name}: #{[commit_hash, commit_timestamp, commit_author].inspect}"
-      subject.to_s.should == subject.inspect
+      subject.inspect.should == "#<#{described_class.name}:#{commit_hash}>"
+      subject.to_s.should == commit_hash
     end
   end
 

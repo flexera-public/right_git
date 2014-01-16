@@ -23,19 +23,18 @@
 # ancestor
 require 'right_git/shell'
 
-# local
-require 'logger'
-
 module RightGit::Shell
 
   # Interface for a shell intended to work with RightGit.
   module Interface
 
-    # Provides a default logger object (overridable).
+    # Return a logger object.
     #
-    # @return [Logger] default logger for STDOUT
-    def default_logger
-      @default_logger ||= ::Logger.new(STDOUT)
+    # Must be overridden.
+    #
+    # @return [Logger]
+    def logger
+      raise NotImplementedError
     end
 
     # Run the given command and print the output to stdout.
@@ -45,7 +44,6 @@ module RightGit::Shell
     # @param [String] cmd the shell command to run
     # @param [Hash] options for execution
     # @option options :directory [String] to use as working directory during command execution or nil
-    # @option options :logger [Logger] logger for shell execution (default = STDOUT)
     # @option options :outstream [IO] output stream to receive STDOUT and STDERR from command (default = STDOUT)
     # @option options :raise_on_failure [TrueClass|FalseClass] if true, wil raise a RuntimeError if the command does not end successfully (default), false to ignore errors
     # @option options :set_env_vars [Hash] environment variables to set during execution (default = none set)

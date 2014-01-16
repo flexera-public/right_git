@@ -26,11 +26,13 @@ require 'right_git'
 module RightGit
   module Git
     class GitError < RightGitError; end
-
-    autoload :Branch,           'right_git/git/branch'
-    autoload :BranchCollection, 'right_git/git/branch_collection'
-    autoload :Commit,           'right_git/git/commit'
-    autoload :Repository,       'right_git/git/repository'
-    autoload :Tag,              'right_git/git/tag'
   end
 end
+
+# module contents
+require 'right_git/git/belongs_to_repository'
+require 'right_git/git/branch'
+require 'right_git/git/branch_collection'
+require 'right_git/git/commit'
+require 'right_git/git/repository'
+require 'right_git/git/tag'

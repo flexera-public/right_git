@@ -27,11 +27,11 @@ module RightGit::Git
 
   # A commit within a Git repository.
   class Commit
+    include ::RightGit::Git::BelongsToRepository
+
     COMMIT_INFO = /^([0-9A-Fa-f]+) ([0-9]+) (.*)$/
 
     COMMIT_SHA1_REGEX = /^[0-9a-fA-F]{40}$/
-
-    attr_reader :repo
 
     class CommitError < GitError; end
 
@@ -45,15 +45,20 @@ module RightGit::Git
       @info = [ match[1], Integer(match[2]), match[3] ]
     end
 
-    # @return [String] stringized
+    # Provide a String representation of this commit (specifically, its commit hash).
     def to_s
-      "#{self.class.name}: #{@info.inspect}"
+      hash
     end
-    alias inspect to_s
 
+    # Provide a programmer-friendly representation of this branch.
+    def inspect
+      '#<%s:%s>' % [self.class.name, hash]
+    end
+
+    # The commit hash. This overrides String#hash on purpose
+    #
     # @return [String] hash of commit (may be abbreviated)
     def hash
-      # This overrides String#hash on purpose
       @info[0]
     end
 

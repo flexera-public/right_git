@@ -24,7 +24,6 @@
 require 'right_git/shell'
 
 # local
-require 'logger'
 require 'stringio'
 require 'singleton'
 
@@ -47,17 +46,20 @@ module RightGit::Shell
       end
     end
 
+    # Delegates to the RightGit class logger.
+    def logger
+      ::RightGit::Git::Repository.logger
+    end
+
     # Implements execute interface.
     def execute(cmd, options = {})
       options = {
         :directory        => nil,
-        :logger           => nil,
         :outstream        => nil,
         :raise_on_failure => true,
         :set_env_vars     => nil,
         :clear_env_vars   => nil,
       }.merge(options)
-      logger = options[:logger] || default_logger
       outstream = options[:outstream]
 
       # build execution block.

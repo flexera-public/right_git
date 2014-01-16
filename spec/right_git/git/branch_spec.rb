@@ -35,8 +35,8 @@ describe RightGit::Git::Branch do
       subject.should == subject
       (subject <=> subject).should == 0
       (subject =~ ::Regexp.compile(::Regexp.escape(branch_name))).should == 0
-      subject.inspect.should == "#{described_class.name}: #{branch_name.inspect}"
-      subject.to_s.should == subject.inspect
+      subject.inspect.should == "#<#{described_class.name}:#{branch_name.inspect}>"
+      subject.to_s.should == subject.fullname
       subject.display(branch_name.length + 1).should == branch_name + ' '
     end
 
@@ -103,7 +103,7 @@ describe RightGit::Git::Branch do
     it 'should raise' do
       expect { subject }.to raise_error(
         described_class::BranchError,
-        "Unrecognized branch info: #{branch_line.inspect}")
+        "Malformed branch name #{branch_line.inspect}")
     end
   end
 

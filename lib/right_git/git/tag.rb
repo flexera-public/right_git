@@ -27,7 +27,9 @@ module RightGit::Git
 
   # A tag in a Git repository.
   class Tag
-    attr_reader :repo, :name
+    include ::RightGit::Git::BelongsToRepository
+
+    attr_reader :name
 
     class TagError < GitError; end
 

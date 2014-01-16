@@ -4,19 +4,20 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = "right_git"
-  s.version = "0.0.3"
+  s.name = %q{right_git}
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tony Spataro", "Scott Messier"]
-  s.date = "2013-12-20"
-  s.description = "An assortment of git-related classes created by RightScale."
-  s.email = "support@rightscale.com"
+  s.date = %q{2014-01-15}
+  s.description = %q{An assortment of git-related classes created by RightScale.}
+  s.email = %q{support@rightscale.com}
   s.extra_rdoc_files = [
     "LICENSE",
     "README.rdoc"
   ]
   s.files = [
+    ".rspec",
     "CHANGELOG.rdoc",
     "LICENSE",
     "README.rdoc",
@@ -24,6 +25,7 @@ Gem::Specification.new do |s|
     "VERSION",
     "lib/right_git.rb",
     "lib/right_git/git.rb",
+    "lib/right_git/git/belongs_to_repository.rb",
     "lib/right_git/git/branch.rb",
     "lib/right_git/git/branch_collection.rb",
     "lib/right_git/git/commit.rb",
@@ -34,25 +36,28 @@ Gem::Specification.new do |s|
     "lib/right_git/shell/interface.rb",
     "right_git.gemspec"
   ]
-  s.homepage = "https://github.com/rightscale/right_git"
+  s.homepage = %q{https://github.com/rightscale/right_git}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.26"
-  s.summary = "Reusable Git repository management code."
+  s.rubygems_version = %q{1.6.2}
+  s.summary = %q{Reusable Git repository management code.}
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
+      s.add_runtime_dependency(%q<right_support>, ["~> 2.8"])
       s.add_development_dependency(%q<rake>, ["< 0.10", ">= 0.8.7"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.8.3"])
       s.add_development_dependency(%q<nokogiri>, ["= 1.5.6"])
     else
+      s.add_dependency(%q<right_support>, ["~> 2.8"])
       s.add_dependency(%q<rake>, ["< 0.10", ">= 0.8.7"])
       s.add_dependency(%q<jeweler>, ["~> 1.8.3"])
       s.add_dependency(%q<nokogiri>, ["= 1.5.6"])
     end
   else
+    s.add_dependency(%q<right_support>, ["~> 2.8"])
     s.add_dependency(%q<rake>, ["< 0.10", ">= 0.8.7"])
     s.add_dependency(%q<jeweler>, ["~> 1.8.3"])
     s.add_dependency(%q<nokogiri>, ["= 1.5.6"])
