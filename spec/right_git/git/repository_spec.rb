@@ -227,11 +227,11 @@ EOF
     end
   end # fetch_all
 
-  context '#branch_for' do
+  context '#branch' do
     let(:branch_name) { 'z_branch' }
 
-    it 'should make branch' do
-      actual = subject.branch_for(branch_name)
+    it 'should make a branch object' do
+      actual = subject.branch(branch_name)
       actual.should == ::RightGit::Git::Branch.new(subject, branch_name)
     end
   end # branch_for

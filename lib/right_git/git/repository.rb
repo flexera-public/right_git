@@ -114,13 +114,19 @@ module RightGit::Git
       true
     end
 
+    # @deprecated alias for #branch
+    def branch_for(branch_name)
+      warn "#{self.class.name}#branch_for is deprecated; please use #{self.class.name}#branch instead"
+      branch(branch_name)
+    end
+
     # Factory method for a branch object referencing this repository. The branch may be
     # hypothetical (e.g. does not exist yet).
     #
     # @param [String] branch_name for reference
     #
     # @return [Branch] new branch
-    def branch_for(branch_name)
+    def branch(branch_name)
       Branch.new(self, branch_name)
     end
 
