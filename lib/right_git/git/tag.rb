@@ -46,11 +46,15 @@ module RightGit::Git
       @name = name
     end
 
-    # @return [String] stringized
+    # @return [String] the tag's name
     def to_s
-      "#{self.class.name}: #{@name.inspect}"
+      name
     end
-    alias inspect to_s
+
+    # @return [String] info about this Ruby object
+    def inspect
+      "#<#{self.class.name}:#{name.inspect}>"
+    end
 
     # @param [Tag] other
     # @return [TrueClass|FalseClass] true if equivalent

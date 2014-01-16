@@ -163,6 +163,7 @@ module RightGit::Git
     # @param [Hash] options for log
     # @option options [Integer] :skip as lines of most recent history to skip (Default = include most recent)
     # @option options [Integer] :tail as max history of log
+    # @option options [TrueClass|FalseClass] :merges as true to exclude non-merge commits
     # @option options [TrueClass|FalseClass] :no_merges as true to exclude merge commits
     # @option options [TrueClass|FalseClass] :full_hashes as true show full hashes, false for (7-character) abbreviations
     #
@@ -170,7 +171,8 @@ module RightGit::Git
     def log(revision, options = {})
       options = {
         :skip        => nil,
-        :tail        => 1_000,
+        :tail        => 10_000,
+        :merges      => false,
         :no_merges   => false,
         :full_hashes => false,
       }.merge(options)
@@ -178,12 +180,13 @@ module RightGit::Git
       git_args = [
         'log',
         "-n#{options[:tail]}",
-        "--format=\"%#{options[:full_hashes] ? 'H' : 'h'} %at %aE\""  # double-quotes are Windows friendly
+        "--format=\"#{options[:full_hashes] ? Commit::LOG_FORMAT_LONG : Commit::LOG_FORMAT}\""  # double-quotes are Windows friendly
       ]
       git_args << "--skip #{skip}" if skip
+      git_args << "--merges" if options[:merges]
       git_args << "--no-merges" if options[:no_merges]
       git_args << revision if revision
-      git_output(git_args).lines.map { |line| Commit.new(self, line) }
+      git_output(git_args).lines.map { |line| Commit.new(self, line.strip) }
     end
 
     # Cleans the current repository of untracked files.

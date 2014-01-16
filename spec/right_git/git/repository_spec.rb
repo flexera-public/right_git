@@ -353,7 +353,8 @@ EOF
           {
             :hash      => commit.hash,
             :timestamp => commit.timestamp.to_i,
-            :author    => commit.author
+            :author    => commit.author,
+            :comment   => commit.comment
           }
         end
         actual_commits.should == expected_commits
@@ -363,24 +364,24 @@ EOF
     context 'with abbreviated hashes' do
       let(:expected_commits) do
         [
-          { :hash => '0123456', :timestamp => 1378318888, :author => 'foo@bar.com' },
-          { :hash => '789abcd', :timestamp => 1378317777, :author => 'baz@bar.com' },
-          { :hash => 'ef01234', :timestamp => 1378316666, :author => 'foo@bar.com' }
+          { :hash => '0123456', :timestamp => 1378318888, :author => 'foo@bar.com', :comment => 'i like bees' },
+          { :hash => '789abcd', :timestamp => 1378317777, :author => 'baz@bar.com', :comment => 'i like monkeys' },
+          { :hash => 'ef01234', :timestamp => 1378316666, :author => 'foo@bar.com', :comment => 'i like cereal' }
         ]
       end
       let(:log_output) do
         expected_commits.inject([]) do |result, data|
-          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]}"
+          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]} #{data[:comment]}"
           result
         end.join("\n") + "\n"
       end
 
       [
-        [nil, {}, ['-n1000', '--format="%h %at %aE"']],
+        [nil, {}, ['-n10000', '--format="%h %at %aE %s"']],
         [
           'master',
           { :tail => 3, :no_merges => true },
-          ['-n3', '--format="%h %at %aE"', '--no-merges master']
+          ['-n3', '--format="%h %at %aE %s"', '--no-merges master']
         ]
       ].each do |params|
         context "params = #{params.inspect[0..31]}..." do
@@ -395,14 +396,14 @@ EOF
     context 'with full hashes' do
       let(:expected_commits) do
         [
-          { :hash => '0123456789abcdef0123456789abcdef01234567', :timestamp => 1378321111, :author => 'foo@bar.com' },
-          { :hash => '89abcdef0123456789abcdef0123456789abcdef', :timestamp => 1378320000, :author => 'baz@bar.com' },
-          { :hash => 'abcdef0123456789abcdef0123456789abcdef01', :timestamp => 1378319999, :author => 'foo@bar.com' }
+          { :hash => '0123456789abcdef0123456789abcdef01234567', :timestamp => 1378321111, :author => 'foo@bar.com', :comment => 'i like bees' },
+          { :hash => '89abcdef0123456789abcdef0123456789abcdef', :timestamp => 1378320000, :author => 'baz@bar.com', :comment => 'i like monkeys' },
+          { :hash => 'abcdef0123456789abcdef0123456789abcdef01', :timestamp => 1378319999, :author => 'foo@bar.com', :comment => 'i like cereal' }
         ]
       end
       let(:log_output) do
         expected_commits.inject([]) do |result, data|
-          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]}"
+          result << "#{data[:hash]} #{data[:timestamp]} #{data[:author]} #{data[:comment]}"
           result
         end.join("\n") + "\n"
       end
@@ -411,12 +412,12 @@ EOF
         [
           'foo',
           { :tail => 3, :no_merges => true, :full_hashes => true },
-          ['-n3', '--format="%H %at %aE"', '--no-merges foo']
+          ['-n3', '--format="%H %at %aE %s"', '--no-merges foo']
         ],
         [
           nil,
           { :tail => 7, :skip => 4, :full_hashes => true },
-          ['-n7', '--format="%H %at %aE"', '--skip 4']
+          ['-n7', '--format="%H %at %aE %s"', '--skip 4']
         ]
       ].each do |params|
         context "params = #{params.inspect[0..31]}..." do
