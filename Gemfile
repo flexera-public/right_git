@@ -8,7 +8,7 @@ source 'https://rubygems.org'
 # DO NOT add gemspec to this file because it breaks Jeweler's .gemspec generation
 
 # Runtime dependencies of RightGit
-gem "right_support", [">= 2.8.10", "< 3.0.0"], :path => '/Users/tony/Code/RightScale/right_support'
+gem "right_support", [">= 2.8.10", "< 3.0.0"]
 
 # Gems used during RightGit development that should be called out in the gemspec
 group :development do
