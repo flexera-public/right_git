@@ -28,6 +28,7 @@ module RightGit::Git
   # A commit within a Git repository.
   class Commit
     include ::RightGit::Git::BelongsToRepository
+
     LOG_FORMAT_LONG   = "%H %at %aE %s"
     LOG_FORMAT        = "%h %at %aE %s"
     COMMIT_INFO       = /^([0-9A-Fa-f]+) ([0-9]+) (\S+) (.*)$/
@@ -79,7 +80,12 @@ module RightGit::Git
 
     alias comment subject
 
-    # @return [TrueClass|FalseClass] true if the given revision is a (fully qualified, not abbreviated) commit SHA
+    # @return [RightGit::Git::Diff] information about the changes introduced by this commit
+    def diff
+      @repo.diff(self.hash)
+    end
+
+    # @return [Boolean] true if the given revision is a (fully qualified, not abbreviated) commit SHA
     def self.sha?(revision)
       !!COMMIT_SHA1_REGEX.match(revision)
     end

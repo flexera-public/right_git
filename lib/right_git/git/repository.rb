@@ -166,15 +166,15 @@ module RightGit::Git
       git_output('tag').lines.map { |line| Tag.new(self, line.strip) }
     end
 
-    # Generates a list of commits using the given 'git log' arguments.
+    # Generate a list of commits using the given 'git log' arguments.
     #
     # @param [String] revision to log or nil
     # @param [Hash] options for log
     # @option options [Integer] :skip as lines of most recent history to skip (Default = include most recent)
     # @option options [Integer] :tail as max history of log
-    # @option options [TrueClass|FalseClass] :merges as true to exclude non-merge commits
-    # @option options [TrueClass|FalseClass] :no_merges as true to exclude merge commits
-    # @option options [TrueClass|FalseClass] :full_hashes as true show full hashes, false for (7-character) abbreviations
+    # @option options [Boolean] :merges as true to exclude non-merge commits
+    # @option options [Boolean] :no_merges as true to exclude merge commits
+    # @option options [Boolean] :full_hashes as true show full hashes, false for (7-character) abbreviations
     #
     # @return [Array] list of commits
     def log(revision, options = {})
@@ -196,6 +196,13 @@ module RightGit::Git
       git_args << "--no-merges" if options[:no_merges]
       git_args << revision if revision
       git_output(git_args).lines.map { |line| Commit.new(self, line.strip) }
+    end
+
+    # Retrieve information about the differences introduced by a commit (or range of commits).
+    # @param [String] refs a single commit ref, or a range separated by .. or ...
+    # @return [RightGit::Git::Diff] information about the differences
+    def diff(refs)
+      Diff.new(self, refs)
     end
 
     # Cleans the current repository of untracked files.
