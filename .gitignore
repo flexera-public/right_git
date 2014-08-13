@@ -2,3 +2,4 @@
 .idea/
 .rvmrc
 pkg/
+.ruby-version
