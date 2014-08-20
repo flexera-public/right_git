@@ -47,39 +47,75 @@ module RightGit::Shell
         :raise_on_failure => true,
         :set_env_vars     => nil,
         :clear_env_vars   => nil,
-        :logger => default_logger
+        :logger           => default_logger,
+        :timeout          => nil,
       }.merge(options)
       outstream = options[:outstream]
 
       logger = options[:logger]
 
-      # build execution block.
+      # build initial popener.
       exitstatus = nil
-      executioner = lambda do
-        logger.info("+ #{cmd}")
-        ::IO.popen("#{cmd} 2>&1", 'r') do |output|
-          output.sync = true
-          done = false
-          while !done
-            begin
-              data = output.readline
+      popener = lambda do |output|
+        output.sync = true
+        loop do
+          # note stdout remains selectable after process dies.
+          if (::IO.select([output], nil, nil, 0.1) rescue nil)
+            if data = output.gets
               if outstream
                 outstream << data
               else
-                logger.info(data.strip)
+                data = data.strip
+                logger.info(data) unless data.empty?
               end
-            rescue ::EOFError
-              done = true
+            else
+              break
             end
           end
         end
+      end
+
+      # timeout optionally wraps popener. the timeout must happen inside of the
+      # IO.popen block or else it has no good effect.
+      if timeout = options[:timeout]
+        popener = lambda do |p|
+          lambda do |o|
+            ::Timeout.timeout(timeout) { p.call(o) }
+          end
+        end.call(popener)
+      end
+
+      # build initial executioner in terms of popener.
+      executioner = lambda do
+        logger.info("+ #{cmd}")
+        error_msg = nil
+        ::IO.popen("#{cmd} 2>&1", 'r') do |output|
+          begin
+            popener.call(output)
+          rescue ::EOFError
+            # done
+          rescue ::Timeout::Error
+            # kill still-running process or else popen's ensure will hang.
+            ::Process.kill('KILL', output.pid)
+
+            # intentionally not reading last data as that could still block
+            # due to a child of created process inheriting stdout.
+            error_msg = "Execution timed out after #{options[:timeout]} seconds."
+          end
+        end
+
+        # note that a killed process may exit 0 under Windows.
         exitstatus = $?.exitstatus
-        if (!$?.success? && options[:raise_on_failure])
-          raise ShellError, "Execution failed with exitstatus #{exitstatus}"
+        if 0 == exitstatus && error_msg
+          exitstatus = 1
+        end
+        if (exitstatus != 0 && options[:raise_on_failure])
+          error_msg ||= "Execution failed with exitstatus #{exitstatus}"
+          raise ShellError, error_msg
         end
       end
 
-      # configure and invoke.
+      # configure executioner (by options) and then invoke executioner.
       configure_executioner(executioner, options).call
 
       return exitstatus
