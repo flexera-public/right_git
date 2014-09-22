@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib"]
   s.authors = ["Tony Spataro", "Scott Messier"]
-  s.date = "2014-08-20"
+  s.date = "2014-09-22"
   s.description = "An assortment of git-related classes created by RightScale."
   s.email = "support@rightscale.com"
   s.extra_rdoc_files = [
@@ -40,7 +40,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = "https://github.com/rightscale/right_git"
   s.licenses = ["MIT"]
-  s.rubygems_version = "2.2.2"
+  s.rubygems_version = "2.2.0"
   s.summary = "Reusable Git repository management code."
 
   if s.respond_to? :specification_version then
@@ -50,6 +50,7 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<right_support>, [">= 2.8.10"])
       s.add_development_dependency(%q<rake>, [">= 0.8.7"])
       s.add_development_dependency(%q<jeweler>, ["~> 2.0"])
+      s.add_development_dependency(%q<right_develop>, ["~> 1.0"])
       s.add_development_dependency(%q<debugger>, [">= 1.6.6"])
       s.add_development_dependency(%q<pry>, [">= 0"])
       s.add_development_dependency(%q<pry-byebug>, [">= 0"])
@@ -57,6 +58,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<right_support>, [">= 2.8.10"])
       s.add_dependency(%q<rake>, [">= 0.8.7"])
       s.add_dependency(%q<jeweler>, ["~> 2.0"])
+      s.add_dependency(%q<right_develop>, ["~> 1.0"])
       s.add_dependency(%q<debugger>, [">= 1.6.6"])
       s.add_dependency(%q<pry>, [">= 0"])
       s.add_dependency(%q<pry-byebug>, [">= 0"])
@@ -65,6 +67,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<right_support>, [">= 2.8.10"])
     s.add_dependency(%q<rake>, [">= 0.8.7"])
     s.add_dependency(%q<jeweler>, ["~> 2.0"])
+    s.add_dependency(%q<right_develop>, ["~> 1.0"])
     s.add_dependency(%q<debugger>, [">= 1.6.6"])
     s.add_dependency(%q<pry>, [">= 0"])
     s.add_dependency(%q<pry-byebug>, [">= 0"])

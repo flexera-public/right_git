@@ -14,6 +14,8 @@ group :development do
   gem 'rake', '>= 0.8.7'
   gem 'jeweler', '~> 2.0'
 
+  gem 'right_develop', '~> 1.0'
+
   # debuggers
   gem 'debugger', '>= 1.6.6', :platforms => [:ruby_19, :ruby_20]
   gem 'pry', :platforms => [:ruby_21]
