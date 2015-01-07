@@ -59,59 +59,98 @@ describe RightGit::Git::BranchCollection do
 
   subject { described_class.new(repo) }
 
-  let(:branch_output) { "  master\n  branch_a\n  branch_b\n  origin/master\n  origin/branch_a\n  origin/branch_c\n" }
+  context 'with no branches' do
+    let(:branch_output) { "* (no branch)\n" }
 
-  before(:each) do
-    # The branch collection always enumerates all branches when it's constructed
-    repo.
-      should_receive(:git_output).
-      with(['branch', '-a']).
-      and_return(branch_output).once.ordered
-  end
-
-  context '#new' do
-    it 'should enumerate all local and remote branches' do
-      subject.size.should == 6
-    end
-  end
-
-  context '#local' do
-    it 'should return local branches only' do
-      actual = subject.local
-      actual.should be_a_kind_of(described_class)
-      actual_branches = []
-      actual.each { |branch| actual_branches << branch.fullname }
-      actual_branches.should == local_branches
-    end
-  end
-
-  context '#remote' do
-    it 'should return remote branches only' do
-      actual = subject.remote
-      actual.should be_a_kind_of(described_class)
-      actual_branches = []
-      actual.each { |branch| actual_branches << branch.fullname }
-      actual_branches.should == remote_branches
-    end
-  end
-
-  context '#merged' do
-    let(:merged_branches) { ["origin/#{revision}", 'origin/branch_a'] }
-    let(:merged_branch_output) do
-      merged_branches.map { |fullname| "  #{fullname}"}.join("\n") + "\n"
-    end
-
-    it 'should return merged-to-revision collection' do
+    before(:each) do
+      # The branch collection always enumerates all branches when it's constructed
       repo.
         should_receive(:git_output).
-        with(['branch', '-a', '--merged', revision]).
-        and_return(merged_branch_output).
-        once
-      actual = subject.merged(revision)
-      actual.should be_a_kind_of(described_class)
-      actual_branches = []
-      actual.each { |branch| actual_branches << branch.fullname }
-      actual_branches.should == merged_branches
+        with(['branch', '-a']).
+        and_return(branch_output).once.ordered
+    end
+
+    context '#new' do
+      it 'should enumerate nothing' do
+        subject.size.should == 0
+      end
     end
   end
+
+  context 'with normal branch listing' do
+    let(:branch_output) { "  master\n  branch_a\n  branch_b\n  origin/master\n  origin/branch_a\n  origin/branch_c\n" }
+
+    before(:each) do
+      # The branch collection always enumerates all branches when it's constructed
+      repo.
+        should_receive(:git_output).
+        with(['branch', '-a']).
+        and_return(branch_output).once.ordered
+    end
+
+    context '#new' do
+      it 'should enumerate all local and remote branches' do
+        subject.size.should == 6
+      end
+    end
+
+    context '#local' do
+      it 'should return local branches only' do
+        actual = subject.local
+        actual.should be_a_kind_of(described_class)
+        actual_branches = []
+        actual.each { |branch| actual_branches << branch.fullname }
+        actual_branches.should == local_branches
+      end
+    end
+
+    context '#remote' do
+      it 'should return remote branches only' do
+        actual = subject.remote
+        actual.should be_a_kind_of(described_class)
+        actual_branches = []
+        actual.each { |branch| actual_branches << branch.fullname }
+        actual_branches.should == remote_branches
+      end
+    end
+
+    context '#merged' do
+      let(:merged_branches) { ["origin/#{revision}", 'origin/branch_a'] }
+      let(:merged_branch_output) do
+        merged_branches.map { |fullname| "  #{fullname}"}.join("\n") + "\n"
+      end
+
+      it 'should return merged-to-revision collection' do
+        repo.
+          should_receive(:git_output).
+          with(['branch', '-a', '--merged', revision]).
+          and_return(merged_branch_output).
+          once
+        actual = subject.merged(revision)
+        actual.should be_a_kind_of(described_class)
+        actual_branches = []
+        actual.each { |branch| actual_branches << branch.fullname }
+        actual_branches.should == merged_branches
+      end
+    end
+  end
+
+  context 'with detached HEAD' do
+    let(:branch_output) { "* (detached from v1.0)\n  master\n  remotes/origin/HEAD -> origin/master" }
+
+    before(:each) do
+      # The branch collection always enumerates all branches when it's constructed
+      repo.
+        should_receive(:git_output).
+        with(['branch', '-a']).
+        and_return(branch_output).once.ordered
+    end
+
+    context '#new' do
+      it 'should enumerate branches but ignore detached HEAD' do
+        subject.size.should == 2
+      end
+    end
+  end
+
 end # RightGit::BranchCollection

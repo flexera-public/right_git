@@ -37,10 +37,13 @@ module RightGit::Git
     # The output of 'git symbolic-ref' when the HEAD ref is not on any branch.
     NO_HEAD_REF = /^HEAD is not a symbolic ref$/
 
-    # The output of the 'git branch' command when the HEAD ref is not on any branch.
-    # This is not useful to RightGit, so we must filter it out of Git's output when
-    # we see it.
-    NO_BRANCH       = '* (no branch)'
+    # The output of the 'git branch' command when the HEAD ref is not on any
+    # branch or in a detached HEAD state (e.g. "* (detached from v1.0)") when
+    # pointing to a tag or the repo has no branches ("* (no branch)").
+    #
+    # This is not useful to RightGit, so we must filter it out of Git's output
+    # when we see it.
+    NOT_A_BRANCH = /^\* \(.*\)$/
 
     # Create a new BranchCollection. Don't pass in a branches parameter unless you really know
     # what you're doing; it's intended more for internal use than anything else.
@@ -61,7 +64,7 @@ module RightGit::Git
         @repo.git_output(git_args).lines.each do |line|
           line.strip!
 
-          if line == NO_BRANCH
+          if line =~ NOT_A_BRANCH
             #no-op; ignore this one
           else
             @branches << Branch.new(@repo, line)
