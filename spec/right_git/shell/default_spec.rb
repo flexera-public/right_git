@@ -104,8 +104,32 @@ describe RightGit::Shell::Default do
       subject.execute(cmd, shell_execute_options.merge(:outstream => nil, :logger => logger)).should == 0
     end
 
-    it 'will be provided with a logger if it cannot afford one' do
+    xit 'will be provided with a logger if it cannot afford one' do
+      pending 'very amusing'
+    end
 
+    it 'should keep-alive by request' do
+      pending 'no sleep in Windows cmd shell' if is_windows
+      logger = flexmock('logger')
+      logged = []
+      logger.should_receive(:info).and_return do |*args|
+        logged << args
+        true
+      end
+
+      # keeps child process alive by inserting dots in logger output when child
+      # process is silent for too long. the keep-alive stops the dots before the
+      # child finishes, which simulates allowing the process to be killed by
+      # travis ci after a reasonable duration.
+      cmd = "#{command_shell} \"echo hi; sleep 1; echo there; sleep 1; echo buddy\""
+      subject.execute(
+        cmd,
+        shell_execute_options.merge(
+          :outstream => nil,
+          :logger => logger,
+          :keep_alive_interval => 0.3,
+          :keep_alive_timeout  => 1.5)).should == 0
+      logged.should == [["+ #{cmd}"], ['hi'], ['.'], ['.'], ['.'], ['there'], ['.'], ['buddy']]
     end
   end # execute
 

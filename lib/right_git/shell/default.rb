@@ -26,6 +26,7 @@ require 'right_git/shell'
 # local
 require 'stringio'
 require 'singleton'
+require 'right_support'
 
 module RightGit::Shell
 
@@ -42,17 +43,34 @@ module RightGit::Shell
     # Implements execute interface.
     def execute(cmd, options = {})
       options = {
-        :directory        => nil,
-        :outstream        => nil,
+        :directory => nil,
+        :outstream => nil,
         :raise_on_failure => true,
-        :set_env_vars     => nil,
-        :clear_env_vars   => nil,
-        :logger           => default_logger,
-        :timeout          => nil,
+        :set_env_vars => nil,
+        :clear_env_vars => nil,
+        :logger => default_logger,
+        :timeout => nil,
+        :keep_alive_interval => nil,
+        :keep_alive_timeout => nil
       }.merge(options)
-      outstream = options[:outstream]
 
+      outstream = options[:outstream]
       logger = options[:logger]
+
+      if keep_alive_interval = options[:keep_alive_interval]
+        keep_alive_wake_time = ::Time.now + keep_alive_interval
+      else
+        keep_alive_wake_time = nil
+      end
+      if keep_alive_timeout = options[:keep_alive_timeout]
+        unless keep_alive_interval
+          raise ::ArgumentError,
+                ':keep_alive_interval is required when using :keep_alive_timeout'
+        end
+        keep_alive_stop_time = ::Time.now + keep_alive_timeout
+      else
+        keep_alive_stop_time = nil
+      end
 
       # build initial popener.
       exitstatus = nil
@@ -68,9 +86,24 @@ module RightGit::Shell
                 data = data.strip
                 logger.info(data) unless data.empty?
               end
+
+              # reset keep alive timer whenever we have normal output.
+              if keep_alive_wake_time
+                keep_alive_wake_time = ::Time.now + keep_alive_interval
+              end
             else
               break
             end
+          elsif keep_alive_wake_time
+            now = ::Time.now
+            if keep_alive_stop_time && now >= keep_alive_stop_time
+              keep_alive_wake_time = nil
+            elsif now >= keep_alive_wake_time
+              # keep-alives go to logger, not the outstream, if any.
+              logger.info('.')
+              keep_alive_wake_time = now + keep_alive_interval
+            end
+            now = nil
           end
         end
       end
