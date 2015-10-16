@@ -25,9 +25,17 @@ require File.expand_path('../../../spec_helper', __FILE__)
 require 'stringio'
 require 'tmpdir'
 
+module RightGit::Shell
+  module DefaultSpec
+    def self.windows?
+      @is_windows ||= !!(RUBY_PLATFORM =~ /mswin|win32|dos|mingw|cygwin/)
+    end
+  end
+end
+
 describe RightGit::Shell::Default do
 
-  let(:is_windows)    { !!(RUBY_PLATFORM =~ /mswin|win32|dos|mingw|cygwin/) }
+  let(:is_windows)    { ::RightGit::Shell::DefaultSpec.windows? }
   let(:command_shell) { is_windows ? 'cmd.exe /C' : 'sh -c' }
   let(:outstream)     { flexmock('outstream') }
   let(:message)       { 'hello world' }
@@ -108,28 +116,29 @@ describe RightGit::Shell::Default do
       pending 'very amusing'
     end
 
-    it 'should keep-alive by request' do
-      pending 'no sleep in Windows cmd shell' if is_windows
-      logger = flexmock('logger')
-      logged = []
-      logger.should_receive(:info).and_return do |*args|
-        logged << args
-        true
-      end
+    unless ::RightGit::Shell::DefaultSpec.windows?
+      it 'should keep-alive by request' do
+        logger = flexmock('logger')
+        logged = []
+        logger.should_receive(:info).and_return do |*args|
+          logged << args
+          true
+        end
 
-      # keeps child process alive by inserting dots in logger output when child
-      # process is silent for too long. the keep-alive stops the dots before the
-      # child finishes, which simulates allowing the process to be killed by
-      # travis ci after a reasonable duration.
-      cmd = "#{command_shell} \"echo hi; sleep 1; echo there; sleep 1; echo buddy\""
-      subject.execute(
-        cmd,
-        shell_execute_options.merge(
-          :outstream => nil,
-          :logger => logger,
-          :keep_alive_interval => 0.3,
-          :keep_alive_timeout  => 1.5)).should == 0
-      logged.should == [["+ #{cmd}"], ['hi'], ['.'], ['.'], ['.'], ['there'], ['.'], ['buddy']]
+        # keeps child process alive by inserting dots in logger output when child
+        # process is silent for too long. the keep-alive stops the dots before the
+        # child finishes, which simulates allowing the process to be killed by
+        # travis ci after a reasonable duration.
+        cmd = "#{command_shell} \"echo hi; sleep 1; echo there; sleep 1; echo buddy\""
+        subject.execute(
+          cmd,
+          shell_execute_options.merge(
+            :outstream => nil,
+            :logger => logger,
+            :keep_alive_interval => 0.3,
+            :keep_alive_timeout  => 1.5)).should == 0
+        logged.should == [["+ #{cmd}"], ['hi'], ['.'], ['.'], ['.'], ['there'], ['.'], ['buddy']]
+      end
     end
   end # execute
 
@@ -185,6 +194,28 @@ describe RightGit::Shell::Default do
       actual_lines.should include "RIGHT_GIT_DEFAULT_SPEC_A=good"
       actual_lines.should_not include "RIGHT_GIT_DEFAULT_SPEC_B=bad"
       actual_lines.should_not include "RIGHT_GIT_DEFAULT_SPEC_C=ugly"
+    end
+
+    unless ::RightGit::Shell::DefaultSpec.windows?
+      it 'should keep-alive by request' do
+        logger = flexmock('logger')
+        logged = []
+        logger.should_receive(:info).and_return do |*args|
+          logged << args
+          true
+        end
+
+        # dots appear in the log but not in the captured output.
+        cmd = "#{command_shell} \"echo hi; sleep 1; echo there; sleep 1; echo buddy\""
+        actual_message = subject.output_for(
+          cmd,
+          shell_execute_options.merge(
+            :logger => logger,
+            :keep_alive_interval => 0.3,
+            :keep_alive_timeout  => 1.5))
+        actual_message.should == "hi\nthere\nbuddy\n"
+        logged.should == [["+ #{cmd}"], ['.'], ['.'], ['.'], ['.']]
+      end
     end
   end
 

@@ -84,12 +84,14 @@ module RightGit::Shell
                 outstream << data
               else
                 data = data.strip
-                logger.info(data) unless data.empty?
-              end
+                unless data.empty?
+                  logger.info(data)
 
-              # reset keep alive timer whenever we have normal output.
-              if keep_alive_wake_time
-                keep_alive_wake_time = ::Time.now + keep_alive_interval
+                  # reset keep alive timer whenever we have normal output.
+                  if keep_alive_wake_time
+                    keep_alive_wake_time = ::Time.now + keep_alive_interval
+                  end
+                end
               end
             else
               break
