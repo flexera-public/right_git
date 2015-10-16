@@ -43,12 +43,28 @@ module RightGit::Shell
     #
     # @param [String] cmd the shell command to run
     # @param [Hash] options for execution
-    # @option options :directory [String] to use as working directory during command execution or nil
-    # @option options :outstream [IO] output stream to receive STDOUT and STDERR from command (default = STDOUT)
-    # @option options :raise_on_failure [TrueClass|FalseClass] if true, wil raise a RuntimeError if the command does not end successfully (default), false to ignore errors
-    # @option options :set_env_vars [Hash] environment variables to set during execution (default = none set)
-    # @option options :clear_env_vars [Hash] environment variables to clear during execution (default = none cleared but see :clean_bundler_env)
-    # @option options :timeout [Numeric] to kill spawned process when time (in seconds) expires
+    # @option options :directory [String] to use as working directory during
+    #  command execution or nil
+    # @option options :outstream [IO] output stream to receive STDOUT and
+    #  STDERR from command (default = STDOUT)
+    # @option options :raise_on_failure [TrueClass|FalseClass] if true, will
+    #  raise a RuntimeError if the command does not end successfully (default), false to ignore errors
+    # @option options :set_env_vars [Hash] environment variables to set during
+    #  execution (default = none set)
+    # @option options :clear_env_vars [Hash] environment variables to clear
+    #  during execution (default = none cleared but see :clean_bundler_env)
+    # @option options :timeout [Numeric] to kill spawned process when time
+    #  (in seconds) expires
+    # @option options :keep_alive_interval [Numeric] as periodic timer, in
+    #  seconds, for emitting output to keep travis ci from killing job or nil
+    #  to remain silent (default). note that keep-alives are always written to
+    #  the logger even if command output is being captured by :outstream
+    # @option options :keep_alive_timeout [Numeric] as overall timeout, in
+    #  seconds, for periodically emitting shell output when child process is
+    #  silent, which prevents travis ci from killing a silent job, or nil to
+    #  remain silent (default). can be combined with :timeout to ensure child
+    #  process is kept alive for a maximum amount of time before it will be
+    #  abandoned.
     #
     # @return [Integer] exitstatus of the command
     #
