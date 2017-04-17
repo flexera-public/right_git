@@ -4,20 +4,15 @@
 
 source 'https://rubygems.org'
 
-# DO NOT add gemspec to this file because it breaks Jeweler's .gemspec generation
-
-# Runtime dependencies of RightGit
-gem 'right_support', '>= 2.8.10'
+gemspec
 
 # Gems used during RightGit development that should be called out in the gemspec
 group :development do
-  gem 'rake', '>= 0.8.7'
-  gem 'jeweler', '~> 2.0'
+  gem 'rake', '< 12'
 
   # debuggers
-  gem 'debugger', '>= 1.6.6', :platforms => [:ruby_19, :ruby_20]
-  gem 'pry', :platforms => [:ruby_21]
-  gem 'pry-byebug', :platforms => [:ruby_21]
+  gem 'pry'
+  gem 'pry-byebug'
 end
 
 # Gems that are only used locally by this repo to run tests and should NOT be called out in the

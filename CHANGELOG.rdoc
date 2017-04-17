@@ -1,3 +1,7 @@
+== 1.2.1
+
+Dropped support for Ruby pre-v2.1
+
 == 0.0.1
 
 Added functionality suitable for checkout, listing and general repo maintenance.
