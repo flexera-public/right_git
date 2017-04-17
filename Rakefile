@@ -1,6 +1,7 @@
 # -*-ruby-*-
 require 'rubygems'
 require 'bundler/setup'
+require 'bundler/gem_tasks'
 
 require 'rake'
 require 'rdoc/task'
@@ -26,23 +27,5 @@ Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_files.include('lib/**/*.rb')
   rdoc.rdoc_files.exclude('spec/**/*')
 end
-
-require 'jeweler'
-Jeweler::Tasks.new do |gem|
-  # gem is a Gem::Specification; see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = 'right_git'
-  gem.homepage = 'https://github.com/rightscale/right_git'
-  gem.license = 'MIT'
-  gem.summary = %Q{Reusable Git repository management code.}
-  gem.description = %Q{An assortment of git-related classes created by RightScale.}
-  gem.email = 'support@rightscale.com'
-  gem.authors = ['Tony Spataro', 'Scott Messier']
-  gem.files.exclude 'Gemfile*'
-  gem.files.exclude 'right_git.rconf'
-  gem.files.exclude 'spec/**/*'
-  gem.files.exclude '.ruby-version'
-end
-
-Jeweler::RubygemsDotOrgTasks.new
 
 CLEAN.include('pkg')

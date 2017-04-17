@@ -3,3 +3,4 @@
 .rvmrc
 pkg/
 .ruby-version
+*.gem
