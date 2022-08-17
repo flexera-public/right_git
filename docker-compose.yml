@@ -1,0 +1,13 @@
+version: '3.4'
+
+services:
+  right_git:
+    image: right_git
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: bash -c "bundle exec rspec"
+    volumes:
+      - .:/right_git
+    ports:
+      - 3000:3000
