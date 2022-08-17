@@ -20,4 +20,5 @@ end
 group :test do
   gem 'rspec',    '~> 2.0'
   gem 'flexmock', '~> 0.8.7', :require => nil
+  gem 'simplecov', require: false
 end
